@@ -15,15 +15,15 @@ class LossAggregatorSuite extends FunSuite{
     val currentRoot = new WorkingNode
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     assert(agg.offsets.length == featureIndicesBundle.length)
-    assert(agg.offsets === Array(Array(0, 6), Array(0, 8)))
+    assert(agg.offsets === Array(Array(0, 9), Array(0, 12)))
   }
 
   test("stats should be of correct size") {
     val currentRoot = new WorkingNode
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     assert(agg.stats.length == featureIndicesBundle.length)
-    assert(agg.stats(0).length == 14)
-    assert(agg.stats(1).length == 18)
+    assert(agg.stats(0).length == 21)
+    assert(agg.stats(1).length == 27)
   }
 
   test("add treePoint will not update stats if the leaf node is not in the batch") {
@@ -43,10 +43,14 @@ class LossAggregatorSuite extends FunSuite{
     val stats0 = agg.stats.map(_.clone())
     val diff1 = 2 * (0.4 - 0.3)
     val diff2 = 2.0
+    val weight = 1.0
+    val statsSize = 3
     stats0(1)(0) = diff1
     stats0(1)(1) = diff2
-    stats0(1)(2 * 4 + 2 * 1) = diff1
-    stats0(1)(2 * 4 + 2 * 1 + 1) = diff2
+    stats0(1)(2) = weight
+    stats0(1)(statsSize * 4 + statsSize * 1) = diff1
+    stats0(1)(statsSize * 4 + statsSize * 1 + 1) = diff2
+    stats0(1)(statsSize * 4 + statsSize * 1 + 2) = weight
     agg.add(treePoint)
     assert(stats0 === agg.stats)
   }

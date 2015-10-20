@@ -9,7 +9,7 @@ class LossAggregator(
 
   val (offsets: Array[Array[Int]], stats: Array[Array[Double]]) = {
     val offsetsAndStats = featureIndicesBundle map {indices: Array[Int]=>
-      val sizes: Array[Int] = indices.map(i => metaData.numBins(i)*2)
+      val sizes: Array[Int] = indices.map(i => metaData.numBins(i) * 3)
       val offsetsAndTotalSize = sizes.scan(0)(_+_)
       (offsetsAndTotalSize.dropRight(1), Array.fill[Double](offsetsAndTotalSize.last)(0))
     }
@@ -29,9 +29,10 @@ class LossAggregator(
         val idx = featureIndicesBundle(nodeIdx)(i)
         val bin = treePoint.binnedFeature(idx)
         // offset for the bin in the feature
-        val statsOffset = offsets(nodeIdx)(i) + bin * 2
+        val statsOffset = offsets(nodeIdx)(i) + bin * 3
         stats(nodeIdx)(statsOffset) += diff1
         stats(nodeIdx)(statsOffset + 1) += diff2
+        stats(nodeIdx)(statsOffset + 2) += 1
         i +=1
       }
     }

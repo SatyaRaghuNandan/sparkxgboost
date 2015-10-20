@@ -137,26 +137,29 @@ class SBoost {
     arrayBuilder.result()
   }
 
-  def extractDiffsFromStatsView(v: Seq[Double]): (Array[Double], Array[Double]) = {
-    val length = v.length / 2
+  def extractDiffsAndWeightsFromStatsView(v: Seq[Double]): (Array[Double], Array[Double], Array[Double]) = {
+    val length = v.length / 3
     val d1 = new Array[Double](length)
     val d2 = new Array[Double](length)
+    val weights = new Array[Double](length)
     var idx = 0
     while (idx < length){
-      d1(idx) = v(idx * 2)
-      d2(idx) = v(idx * 2 + 1)
+      d1(idx) = v(idx * 3)
+      d2(idx) = v(idx * 3 + 1)
+      weights(idx) = v(idx * 3 + 2)
       idx += 1
     }
-    (d1, d2)
+    (d1, d2, weights)
   }
 
   def findBestSplitForSingleFeature(
    statsView: Seq[Double],
    featureIdx: Int,
    lambda: Double) = {
-    val (d1, d2) = extractDiffsFromStatsView(statsView)
+    val (d1, d2, weights) = extractDiffsAndWeightsFromStatsView(statsView)
     val (d1CuSum, d1Total) = getCuSumAndTotal(d1)
     val (d2CuSum, d2Total) = getCuSumAndTotal(d2)
+    val (weightsCuSum, weightsTotal) = getCuSumAndTotal(weights)
     val parentTerm = getObjRatio(d1Total, d2Total, lambda)
     val gains = (d1CuSum zip d2CuSum).map { case (d1Left, d2Left) =>
         val leftTerm = getObjRatio(d1Left, d2Left, lambda)
@@ -169,7 +172,10 @@ class SBoost {
     val rightPrediction = getPrediction(
       d1Total - d1CuSum(optimIdx), d2Total - d2CuSum(optimIdx), lambda)
 
-    SplitInfo(WorkingSplit(featureIdx, optimIdx), gains(optimIdx), leftPrediction, rightPrediction)
+    val leftWeight = weightsCuSum(optimIdx)
+    val rightWeight = weightsTotal - leftWeight
+    SplitInfo(WorkingSplit(featureIdx, optimIdx), gains(optimIdx),
+      leftPrediction, rightPrediction, leftWeight, rightWeight)
   }
 
   def createStatsViews(stats: Array[Double], featureIndices: Array[Int], offsets: Array[Int]) = {

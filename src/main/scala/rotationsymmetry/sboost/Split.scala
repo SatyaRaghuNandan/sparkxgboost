@@ -140,4 +140,6 @@ case class SplitInfo(
   split: WorkingSplit,
   gain: Double,
   leftPrediction: Double,
-  rightPrediction: Double)
+  rightPrediction: Double,
+  leftWeight: Double,
+  rightWeight: Double)
