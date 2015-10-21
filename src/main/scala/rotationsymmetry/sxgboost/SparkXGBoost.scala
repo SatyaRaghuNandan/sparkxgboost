@@ -52,8 +52,20 @@ class SparkXGBoost {
     this
   }
 
+  var maxDepth: Int = 1
+  def setMaxDepth(value: Int): this.type = {
+    this.maxDepth = value
+    this
+  }
 
-  def train(dataset: DataFrame): WorkingModel = {
+  var minWeight: Double = 1.0
+  def setMinWeight(value: Double): this.type = {
+    this.minWeight = value
+    this
+  }
+
+
+  def train(dataset: DataFrame): SparkXGBoostModel = {
 
     val categoricalFeatures: Map[Int, Int] =
       MetadataUtils.getCategoricalFeatures(dataset.schema(featuresCol))
@@ -67,12 +79,15 @@ class SparkXGBoost {
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
 
-    var workingModel = WorkingModel(Array(growInitialTree(input)))
+    val initialBias = loss.getInitialBias(input)
+    val initialTree = new WorkingNode(0)
+    initialTree.prediction = Some(initialBias)
+    var workingModel = WorkingModel(Array(initialTree))
 
     var treeIdx: Int = 2
     while (treeIdx < numTrees){
 
-      val currentRoot = new WorkingNode()
+      val currentRoot = new WorkingNode(0)
       val nodeQueue: mutable.Queue[WorkingNode] = new mutable.Queue[WorkingNode]()
       nodeQueue.enqueue(currentRoot)
 
@@ -95,15 +110,18 @@ class SparkXGBoost {
               node.split = Some(splitInfo.split)
               node.idxInBatch = None
 
-              val leftChild = new WorkingNode()
+              val leftChild = new WorkingNode(node.depth + 1)
               leftChild.prediction = Some(splitInfo.leftPrediction)
+              leftChild.weight = Some(splitInfo.leftWeight)
               node.leftChild = Some(leftChild)
 
-              val rightChild = new WorkingNode()
+              val rightChild = new WorkingNode(node.depth + 1)
               rightChild.prediction = Some(splitInfo.rightPrediction)
+              rightChild.weight = Some(splitInfo.rightWeight)
               node.rightChild = Some(rightChild)
 
               Iterator(leftChild, rightChild)
+                .filter(workingNode => workingNode.depth <= maxDepth && workingNode.weight.get >= minWeight)
             }
             case None => Iterator()
           }
@@ -111,7 +129,7 @@ class SparkXGBoost {
         nodeQueue ++= nodesToEnqueue
       }
 
-      if (currentRoot.split.isDefined) {
+      if (!currentRoot.isLeaf) {
         workingModel = WorkingModel(workingModel.trees :+ currentRoot)
         treeIdx += 1
       } else {
@@ -119,10 +137,8 @@ class SparkXGBoost {
       }
     }
 
-    workingModel
+    workingModel.toSparkXGBoostModel(splits, loss)
   }
-
-  def growInitialTree(input: RDD[LabeledPoint]): WorkingNode = null
 
   def dequeueWithinMemLimit(queue: mutable.Queue[WorkingNode]): Array[WorkingNode] = {
     val arrayBuilder = mutable.ArrayBuilder.make[WorkingNode]()

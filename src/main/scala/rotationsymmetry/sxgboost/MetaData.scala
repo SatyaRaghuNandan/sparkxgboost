@@ -12,7 +12,8 @@ object MetaData {
 
   def getMetaData(input: RDD[LabeledPoint], splits: Array[Array[Split]]): MetaData = {
     val numFeatures = input.first().features.size
-    val numBins = splits.map(_.length)
+    // The number of Bins is the number of splits + 1
+    val numBins = splits.map(_.length + 1)
     new MetaData(numFeatures, numBins)
   }
 }

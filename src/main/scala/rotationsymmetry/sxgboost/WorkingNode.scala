@@ -1,11 +1,12 @@
 package rotationsymmetry.sxgboost
 
-class WorkingNode {
+class WorkingNode(val depth: Int) {
   var leftChild: Option[WorkingNode] = None
   var rightChild: Option[WorkingNode] = None
   var split: Option[WorkingSplit] = None
   var prediction: Option[Double] = None
   var idxInBatch: Option[Int] = None
+  var weight: Option[Double] = None
 
   def isLeaf: Boolean = split.isEmpty
 
@@ -43,5 +44,13 @@ class WorkingNode {
       val splitForNode = splitsBundle(split.get.featureIndex)(split.get.threshold)
       new InnerNode(splitForNode, leftNode, rightNode)
     }
+  }
+}
+
+object WorkingNode {
+  def createLeaf(prediction: Double): WorkingNode = {
+    val workingNode = new WorkingNode(1)
+    workingNode.prediction = Some(prediction)
+    workingNode
   }
 }
