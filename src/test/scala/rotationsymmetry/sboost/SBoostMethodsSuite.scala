@@ -36,11 +36,21 @@ class SBoostMethodsSuite extends FunSuite with BeforeAndAfter{
   }
 
   test("findBestSplitForSingleFeature") {
-    val statsView = Seq(1.0, 2.0, 0.0, 0.0, 3.0, 6.0, 1.5, 9.0)
+    val statsView: Seq[Double] = Seq(
+      1.0, 2.0, 1.0,
+      1.5, 0.2, 1.0,
+      0.1, 0.0, 1.0,
+      3.0, 10,  1.0,
+      1.5, 9.0, 1.0
+    )
     val lambda = 0.5
-    val optimSplit = sboost.findBestSplitForSingleFeature(statsView, 1, lambda)
-    //assert(optimSplit.split.threshold == 2)
-    //assert(optimSplit.gain ~== 1.7 relTol 1e-1)
+    val featureIndex = 1
+    val optimSplit = sboost.findBestSplitForSingleFeature(statsView, featureIndex, lambda)
+    assert(optimSplit.split.threshold == 2)
+    assert(optimSplit.split.featureIndex == featureIndex)
+    assert(optimSplit.gain ~== 0.61 relTol 1e-1)
+    assert(optimSplit.leftWeight ~== 3.0 relTol 1e-5)
+    assert(optimSplit.rightWeight ~== 2.0 relTol 1e-5)
   }
 
   test("findBestSplit"){
