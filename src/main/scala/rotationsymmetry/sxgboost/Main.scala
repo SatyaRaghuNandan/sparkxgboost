@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 
 object Main {

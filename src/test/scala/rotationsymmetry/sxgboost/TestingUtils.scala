@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 import org.apache.spark.mllib.linalg.{Matrix, Vector}
 import org.scalatest.exceptions.TestFailedException

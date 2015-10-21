@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 import org.apache.spark.ml.attribute._
 import org.apache.spark.sql.types.StructField

@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD

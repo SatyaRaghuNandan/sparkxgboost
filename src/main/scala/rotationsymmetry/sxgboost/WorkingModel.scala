@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 case class WorkingModel(trees: Array[WorkingNode]) {
   def predict(treePoint: TreePoint): Double = {

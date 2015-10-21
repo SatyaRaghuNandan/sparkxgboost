@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 class WorkingNode {
   var leftChild: Option[WorkingNode] = None
@@ -30,6 +30,18 @@ class WorkingNode {
       } else {
         rightChild.get.locateNode(treePoint)
       }
+    }
+  }
+
+  def toNode(splitsBundle: Array[Array[Split]]): Node = {
+    if (isLeaf) {
+      new LeafNode(prediction.get)
+    } else {
+      val leftNode = leftChild.get.toNode(splitsBundle)
+      val rightNode = rightChild.get.toNode(splitsBundle)
+
+      val splitForNode = splitsBundle(split.get.featureIndex)(split.get.threshold)
+      new InnerNode(splitForNode, leftNode, rightNode)
     }
   }
 }

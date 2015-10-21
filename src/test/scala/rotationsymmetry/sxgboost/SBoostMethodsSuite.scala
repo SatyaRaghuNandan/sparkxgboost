@@ -1,14 +1,14 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import TestingUtils._
 
 class SBoostMethodsSuite extends FunSuite with BeforeAndAfter{
 
-  var sboost: SBoost = null
+  var sboost: SparkXGBoost = null
 
   before {
-    sboost = new SBoost()
+    sboost = new SparkXGBoost()
   }
 
   test("extractDiffsFromStatsView") {

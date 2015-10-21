@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.linalg.Vector
@@ -9,7 +9,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 
-class SBoost {
+class SparkXGBoost {
   var numTrees : Int = 1
   def setNumTrees(value: Int): this.type = {
     this.numTrees = value
@@ -65,7 +65,7 @@ class SBoost {
     val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, maxBins)
 
     val metaData = MetaData.getMetaData(input, splits)
-    val treePoints = TreePoint.convertFromLabeledPoints(input, splits)
+    val treePoints = TreePoint.convertToTreeRDD(input, splits)
 
     var workingModel = WorkingModel(Array(growInitialTree(input)))
 

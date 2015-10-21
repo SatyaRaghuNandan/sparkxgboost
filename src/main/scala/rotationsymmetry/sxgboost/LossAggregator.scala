@@ -1,4 +1,4 @@
-package rotationsymmetry.sboost
+package rotationsymmetry.sxgboost
 
 class LossAggregator(
       val featureIndicesBundle: Array[Array[Int]],
