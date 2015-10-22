@@ -5,7 +5,7 @@ class LossAggregator(
       val workingModel: WorkingModel,
       val currentRoot: WorkingNode,
       val metaData: MetaData,
-      val loss: Loss) {
+      val loss: Loss) extends Serializable {
 
   val (offsets: Array[Array[Int]], stats: Array[Array[Double]]) = {
     val offsetsAndStats = featureIndicesBundle map {indices: Array[Int]=>
@@ -26,6 +26,9 @@ class LossAggregator(
       val nodeIdx = currentRoot.locateNode(treePoint).idxInBatch.get
       var i: Int = 0
       while (i < featureIndicesBundle.length){
+        if (nodeIdx >= featureIndicesBundle.length || i >= featureIndicesBundle(nodeIdx).length) {
+          val x = 1
+        }
         val idx = featureIndicesBundle(nodeIdx)(i)
         val bin = treePoint.binnedFeature(idx)
         // offset for the bin in the feature

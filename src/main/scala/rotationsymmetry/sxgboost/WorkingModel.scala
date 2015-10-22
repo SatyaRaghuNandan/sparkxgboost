@@ -1,6 +1,6 @@
 package rotationsymmetry.sxgboost
 
-case class WorkingModel(trees: Array[WorkingNode]) {
+case class WorkingModel(trees: Array[WorkingNode]) extends Serializable {
   def predict(treePoint: TreePoint): Double = {
     trees.map{ root =>  root.predict(treePoint) }.sum
   }

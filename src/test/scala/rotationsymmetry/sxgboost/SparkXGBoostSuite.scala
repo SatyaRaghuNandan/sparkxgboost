@@ -1,14 +1,12 @@
 package rotationsymmetry.sxgboost
 
-import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.feature.VectorIndexer
-import org.apache.spark.ml.regression.GBTRegressor
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.{SparkContext, SparkConf}
 import org.scalatest.FunSuite
 
 
-class GBTSuite extends FunSuite{
+class SparkXGBoostSuite extends FunSuite{
   test("GBT") {
     val conf = new SparkConf().setAppName("Test").setMaster("local[2]")
     val sc = new SparkContext(conf)
@@ -25,16 +23,17 @@ class GBTSuite extends FunSuite{
 
     val Array(trainingData, testData) = data.randomSplit(Array(0.7, 0.3))
 
-    val gbt = new GBTRegressor()
+    val sXGBoost = new SparkXGBoost()
       .setFeaturesCol("indexedFeatures")
-      .setMaxIter(10)
+      .setLoss(new SquareLoss)
+      .setNumTrees(10)
 
-    val pipeline = new Pipeline()
-      .setStages(Array(featureIndexer, gbt))
+    val indexedTrainingData = featureIndexer.transform(trainingData)
+    val indexedTestData = featureIndexer.transform(testData)
 
-    val model = pipeline.fit(trainingData)
+    val model = sXGBoost.train(indexedTrainingData)
 
-    val predictions = model.transform(testData)
+    val predictions = model.predict(indexedTestData)
     val x = 1
   }
 }

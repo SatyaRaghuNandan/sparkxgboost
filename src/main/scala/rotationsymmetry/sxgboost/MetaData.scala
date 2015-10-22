@@ -5,7 +5,7 @@ import org.apache.spark.rdd.RDD
 
 class MetaData(
       val numFeatures: Int,
-      val numBins: Array[Int]) {
+      val numBins: Array[Int]) extends Serializable {
 }
 
 object MetaData {

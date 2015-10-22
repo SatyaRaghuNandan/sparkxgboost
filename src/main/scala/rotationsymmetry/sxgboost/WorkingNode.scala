@@ -1,6 +1,6 @@
 package rotationsymmetry.sxgboost
 
-class WorkingNode(val depth: Int) {
+class WorkingNode(val depth: Int) extends Serializable {
   var leftChild: Option[WorkingNode] = None
   var rightChild: Option[WorkingNode] = None
   var split: Option[WorkingSplit] = None

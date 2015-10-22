@@ -53,7 +53,7 @@ object OrderedSplit {
     // Iterate over all features.
     var featureIndex = 0
     while (featureIndex < numFeatures) {
-      if (categoricalFeatures.isDefinedAt(featureIndex)) {
+      if (!categoricalFeatures.isDefinedAt(featureIndex)) {
         val featureSamples = sampledInput.map(_.features(featureIndex))
         val featureSplits = findSplitsForContinuousFeature(featureSamples, maxBins)
 
@@ -68,6 +68,8 @@ object OrderedSplit {
         }
       } else {
         val numSplits = categoricalFeatures(featureIndex)
+        splits(featureIndex) = new Array[Split](numSplits)
+
         var splitIndex = 0
         while (splitIndex < numSplits) {
           splits(featureIndex)(splitIndex) = new OrderedSplit(featureIndex, splitIndex)

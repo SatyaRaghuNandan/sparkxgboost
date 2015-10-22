@@ -52,7 +52,7 @@ class SparkXGBoost {
     this
   }
 
-  var maxDepth: Int = 1
+  var maxDepth: Int = 5
   def setMaxDepth(value: Int): this.type = {
     this.maxDepth = value
     this
@@ -64,6 +64,11 @@ class SparkXGBoost {
     this
   }
 
+  var featureSampleRatio: Double = 1.0
+  def setFeatureSampleRatio(value: Double): this.type = {
+    this.featureSampleRatio = value
+    this
+  }
 
   def train(dataset: DataFrame): SparkXGBoostModel = {
 
@@ -93,7 +98,7 @@ class SparkXGBoost {
 
       while (nodeQueue.nonEmpty){
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
-        val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, 10, nodeBatch.length)
+        val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, featureSampleRatio, nodeBatch.length)
 
         val lossAggregator = treePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
@@ -101,6 +106,8 @@ class SparkXGBoost {
           combOp = (agg1, agg2) => agg1.merge(agg2))
 
         val nodesToEnqueue = nodeBatch.indices.flatMap { nodeIdx =>
+          nodeBatch(nodeIdx).idxInBatch = None
+
           val bestSplit = findBestSplit(lossAggregator.stats(nodeIdx),
             lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), lambda, gamma)
 
@@ -108,7 +115,6 @@ class SparkXGBoost {
             case Some(splitInfo) => {
               val node = nodeBatch(nodeIdx)
               node.split = Some(splitInfo.split)
-              node.idxInBatch = None
 
               val leftChild = new WorkingNode(node.depth + 1)
               leftChild.prediction = Some(splitInfo.leftPrediction)
@@ -137,7 +143,7 @@ class SparkXGBoost {
       }
     }
 
-    workingModel.toSparkXGBoostModel(splits, loss)
+    workingModel.toSparkXGBoostModel(splits, loss).setFeaturesCol(featuresCol)
   }
 
   def dequeueWithinMemLimit(queue: mutable.Queue[WorkingNode]): Array[WorkingNode] = {
@@ -238,7 +244,8 @@ class SparkXGBoost {
 
   def getNonZero(value: Double) = if (Math.abs(value) > 1e-10) value else 1e-10
 
-  def sampleFeatureIndices(numFeatures: Int, numSampledFeatures: Int, numSamples: Int): Array[Array[Int]] = {
+  def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int): Array[Array[Int]] = {
+    val numSampledFeatures = Math.ceil(numFeatures * featureSampleRatio).toInt
     val indices = Range(0, numFeatures).toBuffer
     val rnd = new Random()
     val arrayBuilder = mutable.ArrayBuilder.make[Array[Int]]()

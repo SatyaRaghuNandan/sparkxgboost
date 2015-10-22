@@ -4,7 +4,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
 
-abstract class Loss {
+abstract class Loss extends Serializable{
   def diff1(label: Double, f: Double): Double
 
   def diff2(label: Double, f: Double): Double
@@ -15,7 +15,7 @@ abstract class Loss {
 }
 
 
-class SquareLoss extends Loss{
+class SquareLoss extends Loss {
   override def diff1(label: Double, f: Double): Double = 2 * (f - label)
 
   override def diff2(label: Double, f: Double): Double = 2.0

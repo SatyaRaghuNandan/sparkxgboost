@@ -4,7 +4,7 @@ import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{udf, col}
 
-class SparkXGBoostModel(val trees: List[Node], val loss: Loss) {
+class SparkXGBoostModel(val trees: List[Node], val loss: Loss) extends Serializable{
 
   var featuresCol: String = "features"
   def setFeaturesCol(value: String): this.type = {

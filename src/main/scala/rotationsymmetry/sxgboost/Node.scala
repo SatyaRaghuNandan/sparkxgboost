@@ -2,7 +2,7 @@ package rotationsymmetry.sxgboost
 
 import org.apache.spark.mllib.linalg.Vector
 
-abstract class Node {
+abstract class Node extends Serializable {
 
   def predict(features: Vector): Double
 }
