@@ -46,7 +46,7 @@ class SparkXGBoost {
     this
   }
 
-  var maxBins: Int = 100
+  var maxBins: Int = 32
   def setMaxBins(value: Int): this.type = {
     this.maxBins = value
     this
@@ -84,12 +84,10 @@ class SparkXGBoost {
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
 
-    val initialBias = loss.getInitialBias(input)
-    val initialTree = new WorkingNode(0)
-    initialTree.prediction = Some(initialBias)
-    var workingModel = WorkingModel(Array(initialTree))
+    val bias = loss.getInitialBias(input)
+    val workingModel = new WorkingModel(bias, Array())
 
-    var treeIdx: Int = 2
+    var treeIdx: Int = 0 // Number of trees completed
     while (treeIdx < numTrees){
 
       val currentRoot = new WorkingNode(0)
@@ -127,7 +125,7 @@ class SparkXGBoost {
               node.rightChild = Some(rightChild)
 
               Iterator(leftChild, rightChild)
-                .filter(workingNode => workingNode.depth <= maxDepth && workingNode.weight.get >= minWeight)
+                .filter(workingNode => workingNode.depth < maxDepth && workingNode.weight.get >= minWeight)
             }
             case None => Iterator()
           }
@@ -136,7 +134,7 @@ class SparkXGBoost {
       }
 
       if (!currentRoot.isLeaf) {
-        workingModel = WorkingModel(workingModel.trees :+ currentRoot)
+        workingModel.trees = workingModel.trees :+ currentRoot
         treeIdx += 1
       } else {
         treeIdx = numTrees // breaking the loop

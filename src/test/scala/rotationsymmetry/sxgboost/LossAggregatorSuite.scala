@@ -9,7 +9,7 @@ class LossAggregatorSuite extends FunSuite{
   val metaData = new MetaData(3, Array(3, 4, 5))
   val tree0 = new WorkingNode(0)
   tree0.prediction = Some(0.4)
-  val workingModel = new WorkingModel(Array(tree0))
+  val workingModel = new WorkingModel(0, Array(tree0))
 
   test("offsets should be of correct size and values") {
     val currentRoot = new WorkingNode(1)

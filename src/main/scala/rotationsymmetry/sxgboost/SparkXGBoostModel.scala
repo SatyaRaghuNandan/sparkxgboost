@@ -4,7 +4,7 @@ import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{udf, col}
 
-class SparkXGBoostModel(val trees: List[Node], val loss: Loss) extends Serializable{
+class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss) extends Serializable{
 
   var featuresCol: String = "features"
   def setFeaturesCol(value: String): this.type = {
@@ -18,7 +18,11 @@ class SparkXGBoostModel(val trees: List[Node], val loss: Loss) extends Serializa
   }
 
   def predict(features: Vector): Double = {
-    val score = trees.map{ node => node.predict(features) }.sum
+    val score = if (trees.nonEmpty){
+      bias + trees.map{ node => node.predict(features) }.sum
+    } else {
+      bias
+    }
     loss.toPrediction(score)
   }
   def predict(dataset: DataFrame): DataFrame = {

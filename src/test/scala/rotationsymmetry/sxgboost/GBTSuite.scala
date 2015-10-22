@@ -1,8 +1,9 @@
 package rotationsymmetry.sxgboost
 
 import org.apache.spark.ml.Pipeline
+import org.apache.spark.ml.evaluation.RegressionEvaluator
 import org.apache.spark.ml.feature.VectorIndexer
-import org.apache.spark.ml.regression.GBTRegressor
+import org.apache.spark.ml.regression.{DecisionTreeRegressor, GBTRegressor}
 import org.apache.spark.mllib.util.MLUtils
 import org.apache.spark.{SparkContext, SparkConf}
 import org.scalatest.FunSuite
@@ -20,21 +21,19 @@ class GBTSuite extends FunSuite{
     val featureIndexer = new VectorIndexer()
       .setInputCol("features")
       .setOutputCol("indexedFeatures")
-      .setMaxCategories(4)
+      .setMaxCategories(2)
       .fit(data)
 
-    val Array(trainingData, testData) = data.randomSplit(Array(0.7, 0.3))
-
-    val gbt = new GBTRegressor()
+    val gbt = new DecisionTreeRegressor()
       .setFeaturesCol("indexedFeatures")
-      .setMaxIter(10)
+      .setMaxDepth(0)
 
-    val pipeline = new Pipeline()
-      .setStages(Array(featureIndexer, gbt))
+    val model = gbt.fit(featureIndexer.transform(data))
 
-    val model = pipeline.fit(trainingData)
+    val predictions = model.transform(featureIndexer.transform(data))
 
-    val predictions = model.transform(testData)
-    val x = 1
+    val evaluator = new RegressionEvaluator()
+    val mse = evaluator.evaluate(predictions)
+    print(mse)
   }
 }
