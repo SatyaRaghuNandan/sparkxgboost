@@ -2,7 +2,7 @@ package rotationsymmetry.sxgboost
 
 import org.scalatest.FunSuite
 
-class LossAggregatorSuite extends FunSuite{
+class LossAggregatorSuite extends FunSuite with TestData{
 
   val loss = new SquareLoss()
   val featureIndicesBundle = Array(Array(0, 1), Array(1, 2))
@@ -12,14 +12,14 @@ class LossAggregatorSuite extends FunSuite{
   val workingModel = new WorkingModel(0, Array(tree0))
 
   test("offsets should be of correct size and values") {
-    val currentRoot = new WorkingNode(1)
+    val currentRoot = new WorkingNode(0)
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     assert(agg.offsets.length == featureIndicesBundle.length)
     assert(agg.offsets === Array(Array(0, 9), Array(0, 12)))
   }
 
   test("stats should be of correct size") {
-    val currentRoot = new WorkingNode(1)
+    val currentRoot = new WorkingNode(0)
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     assert(agg.stats.length == featureIndicesBundle.length)
     assert(agg.stats(0).length == 21)
@@ -27,7 +27,7 @@ class LossAggregatorSuite extends FunSuite{
   }
 
   test("add treePoint will not update stats if the leaf node is not in the batch") {
-    val currentRoot = new WorkingNode(1)
+    val currentRoot = new WorkingNode(0)
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     val treePoint = TreePoint(0.3, Array(0, 0, 1))
     val stats0 = agg.stats.map(_.clone())
@@ -36,7 +36,7 @@ class LossAggregatorSuite extends FunSuite{
   }
 
   test("add treePoint will update stats correctly if the leaf node is in the batch") {
-    val currentRoot = new WorkingNode(1)
+    val currentRoot = new WorkingNode(0)
     currentRoot.idxInBatch = Some(1)
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     val treePoint = TreePoint(0.3, Array(0, 0, 1))
@@ -56,7 +56,7 @@ class LossAggregatorSuite extends FunSuite{
   }
 
   test("merge stats correctly") {
-    val currentRoot = new WorkingNode(1)
+    val currentRoot = new WorkingNode(0)
     currentRoot.idxInBatch = Some(0)
     val agg = new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss)
     val treePoint1 = TreePoint(0.3, Array(1, 0, 1))
@@ -69,5 +69,13 @@ class LossAggregatorSuite extends FunSuite{
     agg2.add(treePoint2)
     agg1.merge(agg2)
     assert(agg.stats === agg1.stats)
+  }
+
+  test("test") {
+    val currentRoot = new WorkingNode(0)
+    currentRoot.idxInBatch = Some(0)
+    val agg = new LossAggregator(Array(Array(0, 1)), new WorkingModel(0.35, Array[WorkingNode]()),
+      currentRoot, simpleMetaData, loss)
+    simpleBinnedData.foreach(tp => agg.add(tp))
   }
 }

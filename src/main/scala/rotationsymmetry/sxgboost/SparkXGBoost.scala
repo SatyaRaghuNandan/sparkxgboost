@@ -70,7 +70,7 @@ class SparkXGBoost {
     this
   }
 
-  def train(dataset: DataFrame): SparkXGBoostModel = {
+  def fit(dataset: DataFrame): SparkXGBoostModel = {
 
     val categoricalFeatures: Map[Int, Int] =
       MetadataUtils.getCategoricalFeatures(dataset.schema(featuresCol))
@@ -87,7 +87,7 @@ class SparkXGBoost {
     val bias = loss.getInitialBias(input)
     val workingModel = new WorkingModel(bias, Array())
 
-    var treeIdx: Int = 0 // Number of trees completed
+    var treeIdx: Int = 0
     while (treeIdx < numTrees){
 
       val currentRoot = new WorkingNode(0)
@@ -242,7 +242,7 @@ class SparkXGBoost {
 
   def getNonZero(value: Double) = if (Math.abs(value) > 1e-10) value else 1e-10
 
-  def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int): Array[Array[Int]] = {
+  private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int): Array[Array[Int]] = {
     val numSampledFeatures = Math.ceil(numFeatures * featureSampleRatio).toInt
     val indices = Range(0, numFeatures).toBuffer
     val rnd = new Random()

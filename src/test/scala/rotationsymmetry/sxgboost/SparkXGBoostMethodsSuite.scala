@@ -1,6 +1,7 @@
 package rotationsymmetry.sxgboost
 
 import org.scalatest.{BeforeAndAfter, FunSuite}
+import rotationsymmetry.sxgboost.utils.TestingUtils
 import TestingUtils._
 
 class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
@@ -28,9 +29,10 @@ class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
 
   test("sampleFeatureIndices") {
     val numFeatures = 10
-    val numSampledFeatures = 5
+    val featureSampleRatio = 0.5
+    val numSampledFeatures = (numFeatures * featureSampleRatio).toInt
     val numSamples = 20
-    val featureIndicesBundle = sparkXGBoost.sampleFeatureIndices(numFeatures, numSampledFeatures, numSamples)
+    val featureIndicesBundle = sparkXGBoost.sampleFeatureIndices(numFeatures, featureSampleRatio, numSamples)
     assert(featureIndicesBundle.length == numSamples)
     featureIndicesBundle.foreach(indices => assert(indices.length == numSampledFeatures))
   }

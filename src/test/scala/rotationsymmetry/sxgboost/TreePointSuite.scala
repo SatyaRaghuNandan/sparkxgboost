@@ -3,6 +3,7 @@ package rotationsymmetry.sxgboost
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.scalatest.FunSuite
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import rotationsymmetry.sxgboost.utils.TestingUtils
 import TestingUtils._
 
 class TreePointSuite extends FunSuite{

@@ -25,7 +25,7 @@ class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss)
     }
     loss.toPrediction(score)
   }
-  def predict(dataset: DataFrame): DataFrame = {
+  def transform(dataset: DataFrame): DataFrame = {
     val bcastModel = dataset.sqlContext.sparkContext.broadcast(this)
     val predictUDF = udf { (features: Any) =>
       bcastModel.value.predict(features.asInstanceOf[Vector])

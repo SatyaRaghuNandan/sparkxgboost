@@ -25,10 +25,7 @@ class LossAggregator(
     if (currentRoot.locateNode(treePoint).idxInBatch.isDefined) {
       val nodeIdx = currentRoot.locateNode(treePoint).idxInBatch.get
       var i: Int = 0
-      while (i < featureIndicesBundle.length){
-        if (nodeIdx >= featureIndicesBundle.length || i >= featureIndicesBundle(nodeIdx).length) {
-          val x = 1
-        }
+      while (i < featureIndicesBundle(nodeIdx).length){
         val idx = featureIndicesBundle(nodeIdx)(i)
         val bin = treePoint.binnedFeature(idx)
         // offset for the bin in the feature
