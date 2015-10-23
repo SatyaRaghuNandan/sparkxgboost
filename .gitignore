@@ -1,5 +1,4 @@
 .idea
-project
 target
 *.DS_Store
 sample_libsvm_data.txt
