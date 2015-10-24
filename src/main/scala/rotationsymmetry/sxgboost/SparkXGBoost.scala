@@ -23,6 +23,12 @@ class SparkXGBoost(val loss: Loss) {
     this
   }
 
+  var alpha: Double = 0
+  def setAlpha(value: Double): this.type = {
+    this.alpha = value
+    this
+  }
+
   var gamma: Double = 0
   def setGamma(value: Double): this.type = {
     this.gamma = value
@@ -108,7 +114,7 @@ class SparkXGBoost(val loss: Loss) {
           nodeBatch(nodeIdx).idxInBatch = None
 
           val bestSplit = findBestSplit(lossAggregator.stats(nodeIdx),
-            lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), lambda, gamma)
+            lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), lambda, alpha, gamma)
 
           bestSplit match {
             case Some(splitInfo) => {
@@ -176,26 +182,28 @@ class SparkXGBoost(val loss: Loss) {
   private[sxgboost] def findBestSplitForSingleFeature(
    statsView: Seq[Double],
    featureIdx: Int,
-   lambda: Double) = {
+   lambda: Double,
+   alpha: Double) = {
     val (d1, d2, weights) = extractDiffsAndWeightsFromStatsView(statsView)
     val (d1CuSum, d1Total) = getCuSumAndTotal(d1)
     val (d2CuSum, d2Total) = getCuSumAndTotal(d2)
     val (weightsCuSum, weightsTotal) = getCuSumAndTotal(weights)
-    val parentTerm = getObjRatio(d1Total, d2Total, lambda)
-    val gains = (d1CuSum zip d2CuSum).map { case (d1Left, d2Left) =>
-        val leftTerm = getObjRatio(d1Left, d2Left, lambda)
-        val rightTerm = getObjRatio(d1Total - d1Left, d2Total - d2Left, lambda)
-        0.5 * (leftTerm + rightTerm - parentTerm)
+
+    val partialObjAndEstForParent = getPartialObjAndEst(d1Total, d2Total, lambda, alpha)
+    val partialObjAndEst = (d1CuSum zip d2CuSum).map { case (d1Left, d2Left) =>
+      val left = getPartialObjAndEst(d1Left, d2Left, lambda, alpha)
+      val right = getPartialObjAndEst(d1Total - d1Left, d2Total - d2Left, lambda, alpha)
+      (left._1 + right._1 , left._2, right._2)
     }
+    val optimIdx = partialObjAndEst.zipWithIndex.min._2
 
-    val optimIdx = gains.zipWithIndex.max._2
-    val leftPrediction = getPrediction(d1CuSum(optimIdx), d2CuSum(optimIdx), lambda)
-    val rightPrediction = getPrediction(
-      d1Total - d1CuSum(optimIdx), d2Total - d2CuSum(optimIdx), lambda)
-
+    val gain = partialObjAndEstForParent._1 - partialObjAndEst(optimIdx)._1
+    val leftPrediction = partialObjAndEst(optimIdx)._2
+    val rightPrediction = partialObjAndEst(optimIdx)._3
     val leftWeight = weightsCuSum(optimIdx)
     val rightWeight = weightsTotal - leftWeight
-    SplitInfo(WorkingSplit(featureIdx, optimIdx), gains(optimIdx),
+
+    SplitInfo(WorkingSplit(featureIdx, optimIdx), gain,
       leftPrediction, rightPrediction, leftWeight, rightWeight)
   }
 
@@ -212,11 +220,12 @@ class SparkXGBoost(val loss: Loss) {
        featureIndices: Array[Int],
        offsets: Array[Int],
        lambda: Double,
+       alpha: Double,
        gamma: Double): Option[SplitInfo] = {
     val statsViews = createStatsViews(stats, featureIndices, offsets)
 
     val candidateSplit = (statsViews zip featureIndices) map { case (statsView, featureIdx)=>
-        findBestSplitForSingleFeature(statsView, featureIdx, lambda)
+        findBestSplitForSingleFeature(statsView, featureIdx, lambda, alpha)
     }
 
     val eligibleSplit = candidateSplit.filter(_.gain > gamma)
@@ -233,15 +242,6 @@ class SparkXGBoost(val loss: Loss) {
     (cusum.drop(1).dropRight(1), cusum.last)
   }
 
-  private def getObjRatio(g: Double, h: Double, lambda: Double) = {
-    (g * g) / getNonZero(h + lambda)
-  }
-
-  private def getPrediction(g: Double, h: Double, lambda: Double) = {
-    - g / getNonZero(h + lambda)
-  }
-
-  private def getNonZero(value: Double) = if (Math.abs(value) > 1e-10) value else 1e-10
 
   private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int): Array[Array[Int]] = {
     val numSampledFeatures = Math.ceil(numFeatures * featureSampleRatio).toInt
@@ -252,6 +252,36 @@ class SparkXGBoost(val loss: Loss) {
       arrayBuilder += rnd.shuffle(indices).take(numSampledFeatures).toArray
     }
     arrayBuilder.result()
+  }
+
+  private def getNonZero(value: Double) = if (Math.abs(value) > 1e-10) value else 1e-10
+
+  private[sxgboost] def getPartialObjAndEst(g: Double, h: Double, lambda: Double, alpha: Double): (Double, Double) = {
+    val denom = getNonZero(h + lambda)
+
+    val estPositiveSide = if (-(g + alpha) / denom >= 0) {
+      - (g + alpha) / denom
+    } else {
+      0.0
+    }
+    val objPositiveSide = calculatePartialObj(g, h, lambda, alpha, estPositiveSide)
+
+    val estNegativeSide = if (-(g - alpha) / denom < 0) {
+      - (g - alpha) / denom
+    } else {
+      0.0
+    }
+    val objNegativeSide = calculatePartialObj(g, h, lambda, alpha, estNegativeSide)
+
+    if (objPositiveSide < objNegativeSide) {
+      (objPositiveSide, estPositiveSide)
+    } else {
+      (objNegativeSide, estNegativeSide)
+    }
+  }
+
+  private def calculatePartialObj(g: Double, h: Double, lambda: Double, alpha: Double, est: Double): Double = {
+    g * est + 0.5 * (h + lambda) * Math.pow(est, 2.0) + alpha * Math.abs(est)
   }
 
 }

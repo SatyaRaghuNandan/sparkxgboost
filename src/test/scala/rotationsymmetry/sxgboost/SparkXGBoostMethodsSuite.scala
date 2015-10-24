@@ -52,8 +52,9 @@ class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
       1.5, 9.0, 1.0
     )
     val lambda = 0.5
+    val alpha = 0.0
     val featureIndex = 1
-    val optimSplit = sparkXGBoost.findBestSplitForSingleFeature(statsView, featureIndex, lambda)
+    val optimSplit = sparkXGBoost.findBestSplitForSingleFeature(statsView, featureIndex, lambda, alpha)
     assert(optimSplit.split.threshold == 2)
     assert(optimSplit.split.featureIndex == featureIndex)
     assert(optimSplit.gain ~== 0.61 relTol 1e-1)
@@ -86,9 +87,10 @@ class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
     val offsets = Array[Int](0, 15)
     val featureIndices = Array[Int](0, 1)
     val lambda = 0.5
+    val alpha = 0.0
     val gamma = -10.0
 
-    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, gamma)
+    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha, gamma)
     assert(optimSplit.get.split.featureIndex == 1)
     assert(optimSplit.get.split.threshold == 0)
 
@@ -117,9 +119,35 @@ class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
     val offsets = Array[Int](0, 15)
     val featureIndices = Array[Int](0, 1)
     val lambda = 0.5
+    val alpha = 0.0
     val gamma = 10.0
 
-    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, gamma)
+    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha, gamma)
     assert(optimSplit.isEmpty)
+  }
+
+  test("L1 loss") {
+    /* R code for plotting sparse estimate
+
+    makePlot=function(g, h, lambda, alpha, xmin, xmax) {
+      fun=function(x, g, h, lambda, alpha){
+        g*x+0.5*(h+lambda)*x^2+alpha*abs(x)
+      }
+
+      xs = seq(xmin, xmax, 0.01)
+
+      ys = sapply(xs, fun, g, h, lambda, alpha)
+      plot(xs, ys)
+    }
+
+    makePlot(1, 1, 1, 3, -5, 5)
+     */
+
+    // when abs(g) < alpha, we have sparse estimate.
+    assert(sparkXGBoost.getPartialObjAndEst(g = 2.9, h = 2.0, lambda = 0.1, alpha = 3.0)._2 === 0.0)
+    assert(sparkXGBoost.getPartialObjAndEst(g = -2.9, h = 2.0, lambda = 0.1, alpha = 3.0)._2 === 0.0)
+    // otherwise, non-sparse estimate.
+    assert(sparkXGBoost.getPartialObjAndEst(g = 3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
+    assert(sparkXGBoost.getPartialObjAndEst(g = -3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
   }
 }
