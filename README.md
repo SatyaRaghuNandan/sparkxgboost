@@ -1,6 +1,6 @@
 # SparkXGBoost 
 
-`SparkXGBoost` aims to implement the [gradient boosting](https://en.wikipedia.org/wiki/Gradient_boosting) tree algorithm in [XGBoost](https://github.com/dmlc/xgboost/) on the [Apache Spark](http://spark.apache.org) platform. `SparkXGBoost` is distributed under Apache License 2.0. 
+SparkXGBoost aims to implement the [gradient boosting](https://en.wikipedia.org/wiki/Gradient_boosting) tree algorithm in [XGBoost](https://github.com/dmlc/xgboost/) on the [Apache Spark](http://spark.apache.org) platform. `SparkXGBoost` is distributed under Apache License 2.0. 
 
 [![Build Status](https://travis-ci.org/rotationsymmetry/SparkXGBoost.svg?branch=master)](https://travis-ci.org/rotationsymmetry/SparkXGBoost) 
 [![codecov.io](https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master)](https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master)
@@ -9,12 +9,18 @@
 The XGBoost team have a fantastic [introduction](http://xgboost.readthedocs.org/en/latest/model.html) to gradient boosting trees, which inspires `SparkXGBoost`. 
 
 ## Features
-`SparkXGBoost` version 0.1 supports supervised learning using the gradient boosting tree with second order approximation of user-defined loss function. The package comes with `SquareLoss` for regression and `DevianceLoss` for binary classification. 
+SparkXGBoost version 0.1 supports supervised learning using the gradient boosting tree with second order approximation of arbitrary user-defined loss function. The following `Loss` classes are provided with the package: 
 
-* User defined 1-dimensional loss function
-* L2 regularization term on node weights
-* Concurrent learning nodes
+* `SquareLoss` for linear (normal) regression
+* `LogisticLoss` for binary classification
+* `PoissonLoss` for Poisson regression of count data
+
+SparkXGBoost includes following approach to avoid overfitting
+
+* L2 regularization term on node 
 * Feature sub sampling for learning nodes
+
+SparkXGBoost is capable of processing multiple learning nodes in the one pass of the training data to improve efficiency. 
 
 ## Components
 There are three major components:
@@ -27,7 +33,7 @@ class SparkXGBoost(val loss: Loss){
 }
 ```
 
-`SparkXGBoost` contains the trained tree ensemble and is capable to making predictions for the instances.
+`SparkXGBoostModel` contains the trained tree ensemble and is capable to making predictions for the instances.
 
 ``` scala
 class SparkXGBoostModel {
@@ -53,7 +59,31 @@ abstract class Loss{
 }
 ```
   
-## Example
+## Usage Guide and Example
+
+Below is an example running SparkXGBoost. `trainingData` is a `DataFrame` with the labels stored in a column named "label" and the feature vectors stored in a column name "features".  Similarly, `testData` is `DataFrame` with the feature vectors stored in a column name "features". 
+
+Pleaes note that the feature vectors have to been indexed before feeding to the `SparkXGBoost` and `SparkXGBoostModel` to ensure the categorical variables are correctly encoded with metadata.
+
+In SparkXGBoost 0.1, all categorical variables are assumed to be ordered. Unordered categorical variables can be used for training after being coded with [OneHotEncoder](http://spark.apache.org/docs/latest/ml-features.html#onehotencoder). 
+
+``` scala
+  val featureIndexer = new VectorIndexer()
+    .setInputCol("features")
+    .setOutputCol("indexedFeatures")
+    .setMaxCategories(2)
+    .fit(trainingData)
+
+  val sXGBoost = new SparkXGBoost(new SquareLoss)
+    .setFeaturesCol("indexedFeatures")
+    .setMaxDepth(1)
+    .setNumTrees(1)
+  val sXGBoostModel = sXGBoost.fit(
+    featureIndexer.transform(trainingData))
+
+  val predictionData = sXGBoostModel.transform(
+    featureIndexer.transform(testData))
+```
 
 ## Parameters
 The following parameters can be specified by the setters in `SXGBoost` .
@@ -82,7 +112,8 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * lambda [default=0]
 	* L2 regularization term on weights. 
 	* Double, range: [0,∞]
-
+* maxConcurrentNodes[default=50]
+	* maximal number of nodes to be process in one pass of the training data.
 
 The following parameters can be specified by the setters in `SXGBoostModel` .
 
@@ -107,16 +138,24 @@ I have following tentative roadmap for the upcoming releases:
 
 0.4
 
-* Automatically determine the maximal number of current nodes by memory management.
+* Post-pruning
 
 0.5
 
+* Automatically determine the maximal number of current nodes by memory management.
+
+0.6
+
 * Multi-class classification
 
-0.6 
+0.7 
 
 * Unordered categorical variables
 
-## Contributions
+## Bugs and Improvements
  
-Many thanks for testing `SparkXGBoost`. You can file bug report or provide suggestions using [github issues](https://github.com/rotationsymmetry/SparkXGBoost/issues). If you would like to improve the codebase, please don't hesitate to submit a pull request. 
+Many thanks for testing SparkXGBoost! 
+
+You can file bug report or provide suggestions using [github issues](https://github.com/rotationsymmetry/SparkXGBoost/issues). 
+
+If you would like to improve the codebase, please don't hesitate to submit a pull request. 
