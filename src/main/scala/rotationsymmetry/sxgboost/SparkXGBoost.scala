@@ -65,6 +65,12 @@ class SparkXGBoost(val loss: Loss) {
     this
   }
 
+  var maxConcurrentNodes: Int = 50
+  def setMaxConcurrentNodes(value: Int): this.type = {
+    this.maxConcurrentNodes = value
+    this
+  }
+
   def fit(dataset: DataFrame): SparkXGBoostModel = {
 
     val categoricalFeatures: Map[Int, Int] =
@@ -143,7 +149,7 @@ class SparkXGBoost(val loss: Loss) {
     val arrayBuilder = mutable.ArrayBuilder.make[WorkingNode]()
 
     var idx: Int = 0
-    while (queue.nonEmpty && idx < 5){
+    while (queue.nonEmpty && idx < maxConcurrentNodes){
       val node = queue.dequeue()
       node.idxInBatch = Some(idx)
       arrayBuilder += node
