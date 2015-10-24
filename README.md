@@ -17,7 +17,8 @@ SparkXGBoost version 0.1 supports supervised learning using the gradient boostin
 
 SparkXGBoost includes following approach to avoid overfitting
 
-* L2 regularization term on node 
+* L2 regularization term on node
+* L1 regularization term on node
 * Feature sub sampling for learning nodes
 
 SparkXGBoost is capable of processing multiple learning nodes in the one pass of the training data to improve efficiency. 
@@ -112,6 +113,9 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * lambda [default=0]
 	* L2 regularization term on weights. 
 	* Double, range: [0,∞]
+* alpha [default=0]
+	* L1 regularization term on weights. 
+	* Double, range: [0,∞]
 * maxConcurrentNodes[default=50]
 	* maximal number of nodes to be process in one pass of the training data.
 
@@ -130,25 +134,20 @@ I have following tentative roadmap for the upcoming releases:
 0.2
 
 * Support step size.
-* Bagging of the trainning data
 
 0.3
 
-* L1 regularization term on node weights
+* Post-pruning
 
 0.4
 
-* Post-pruning
+* Automatically determine the maximal number of current nodes by memory management.
 
 0.5
 
-* Automatically determine the maximal number of current nodes by memory management.
-
-0.6
-
 * Multi-class classification
 
-0.7 
+0.6 
 
 * Unordered categorical variables
 
