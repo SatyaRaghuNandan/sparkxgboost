@@ -10,16 +10,10 @@ import scala.collection.mutable
 import scala.util.Random
 
 
-class SparkXGBoost {
+class SparkXGBoost(val loss: Loss) {
   var numTrees : Int = 1
   def setNumTrees(value: Int): this.type = {
     this.numTrees = value
-    this
-  }
-
-  var loss: Loss = null
-  def setLoss(value: Loss): this.type = {
-    this.loss = value
     this
   }
 

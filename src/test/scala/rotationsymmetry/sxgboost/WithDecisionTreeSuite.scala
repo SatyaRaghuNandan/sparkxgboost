@@ -22,9 +22,8 @@ class WithDecisionTreeSuite extends FunSuite with TestData with MLlibTestSparkCo
       .setMaxCategories(2)
       .fit(data)
 
-    val sXGBoost = new SparkXGBoost()
+    val sXGBoost = new SparkXGBoost(new SquareLoss)
       .setFeaturesCol("indexedFeatures")
-      .setLoss(new SquareLoss)
       .setMaxDepth(1)
       .setNumTrees(1)
     val sXGBoostModel = sXGBoost.fit(featureIndexer.transform(data))
@@ -51,9 +50,8 @@ class WithDecisionTreeSuite extends FunSuite with TestData with MLlibTestSparkCo
       .setMaxCategories(2)
       .fit(data)
 
-    val sXGBoost = new SparkXGBoost()
+    val sXGBoost = new SparkXGBoost(new SquareLoss)
       .setFeaturesCol("indexedFeatures")
-      .setLoss(new SquareLoss)
       .setMaxDepth(5)
       .setNumTrees(1)
     val sXGBoostModel = sXGBoost.fit(featureIndexer.transform(data))
