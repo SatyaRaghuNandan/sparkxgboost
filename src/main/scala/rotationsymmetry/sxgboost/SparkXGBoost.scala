@@ -144,7 +144,7 @@ class SparkXGBoost {
     workingModel.toSparkXGBoostModel(splits, loss).setFeaturesCol(featuresCol)
   }
 
-  def dequeueWithinMemLimit(queue: mutable.Queue[WorkingNode]): Array[WorkingNode] = {
+  private def dequeueWithinMemLimit(queue: mutable.Queue[WorkingNode]): Array[WorkingNode] = {
     val arrayBuilder = mutable.ArrayBuilder.make[WorkingNode]()
 
     var idx: Int = 0
@@ -157,7 +157,7 @@ class SparkXGBoost {
     arrayBuilder.result()
   }
 
-  def extractDiffsAndWeightsFromStatsView(v: Seq[Double]): (Array[Double], Array[Double], Array[Double]) = {
+  private[sxgboost] def extractDiffsAndWeightsFromStatsView(v: Seq[Double]): (Array[Double], Array[Double], Array[Double]) = {
     val length = v.length / 3
     val d1 = new Array[Double](length)
     val d2 = new Array[Double](length)
@@ -172,7 +172,7 @@ class SparkXGBoost {
     (d1, d2, weights)
   }
 
-  def findBestSplitForSingleFeature(
+  private[sxgboost] def findBestSplitForSingleFeature(
    statsView: Seq[Double],
    featureIdx: Int,
    lambda: Double) = {
@@ -198,7 +198,7 @@ class SparkXGBoost {
       leftPrediction, rightPrediction, leftWeight, rightWeight)
   }
 
-  def createStatsViews(stats: Array[Double], featureIndices: Array[Int], offsets: Array[Int]) = {
+  private def createStatsViews(stats: Array[Double], featureIndices: Array[Int], offsets: Array[Int]) = {
     val extOffsets = offsets :+ stats.length
 
     featureIndices.indices.map { idx=>
@@ -206,7 +206,7 @@ class SparkXGBoost {
     }
   }
 
-  def findBestSplit(
+  private[sxgboost] def findBestSplit(
        stats: Array[Double],
        featureIndices: Array[Int],
        offsets: Array[Int],
@@ -227,20 +227,20 @@ class SparkXGBoost {
     }
   }
 
-  def getCuSumAndTotal(ds: Seq[Double]) = {
+  private[sxgboost] def getCuSumAndTotal(ds: Seq[Double]) = {
     val cusum: Seq[Double] = ds.scan(0.0)(_+_)
     (cusum.drop(1).dropRight(1), cusum.last)
   }
 
-  def getObjRatio(g: Double, h: Double, lambda: Double) = {
+  private def getObjRatio(g: Double, h: Double, lambda: Double) = {
     (g * g) / getNonZero(h + lambda)
   }
 
-  def getPrediction(g: Double, h: Double, lambda: Double) = {
+  private def getPrediction(g: Double, h: Double, lambda: Double) = {
     - g / getNonZero(h + lambda)
   }
 
-  def getNonZero(value: Double) = if (Math.abs(value) > 1e-10) value else 1e-10
+  private def getNonZero(value: Double) = if (Math.abs(value) > 1e-10) value else 1e-10
 
   private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int): Array[Array[Int]] = {
     val numSampledFeatures = Math.ceil(numFeatures * featureSampleRatio).toInt
