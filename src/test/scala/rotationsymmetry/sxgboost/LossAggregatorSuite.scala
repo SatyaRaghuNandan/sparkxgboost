@@ -1,6 +1,7 @@
 package rotationsymmetry.sxgboost
 
 import org.scalatest.FunSuite
+import rotationsymmetry.sxgboost.loss.SquareLoss
 
 class LossAggregatorSuite extends FunSuite with TestData{
 

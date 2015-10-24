@@ -46,11 +46,3 @@ class WorkingNode(val depth: Int) extends Serializable {
     }
   }
 }
-
-object WorkingNode {
-  def createLeaf(prediction: Double): WorkingNode = {
-    val workingNode = new WorkingNode(1)
-    workingNode.prediction = Some(prediction)
-    workingNode
-  }
-}

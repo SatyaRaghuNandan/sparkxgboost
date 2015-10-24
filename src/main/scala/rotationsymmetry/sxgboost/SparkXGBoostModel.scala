@@ -3,6 +3,7 @@ package rotationsymmetry.sxgboost
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions.{udf, col}
+import rotationsymmetry.sxgboost.loss.Loss
 
 class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss) extends Serializable{
 

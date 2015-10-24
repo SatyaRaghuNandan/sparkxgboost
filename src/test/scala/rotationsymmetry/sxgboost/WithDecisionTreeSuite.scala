@@ -5,6 +5,7 @@ import org.apache.spark.ml.feature.VectorIndexer
 import org.apache.spark.ml.regression.DecisionTreeRegressor
 import org.apache.spark.{SparkContext, SparkConf}
 import org.scalatest.FunSuite
+import rotationsymmetry.sxgboost.loss.SquareLoss
 import rotationsymmetry.sxgboost.utils.{TestingUtils, MLlibTestSparkContext}
 import TestingUtils._
 import rotationsymmetry.sxgboost.utils.MLlibTestSparkContext

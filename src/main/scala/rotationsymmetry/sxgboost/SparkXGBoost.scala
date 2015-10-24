@@ -4,6 +4,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{Row, DataFrame}
+import rotationsymmetry.sxgboost.loss.Loss
 
 import scala.collection.mutable
 import scala.util.Random

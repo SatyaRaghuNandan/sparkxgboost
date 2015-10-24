@@ -1,8 +1,8 @@
-package rotationsymmetry.sxgboost
+package rotationsymmetry.sxgboost.Loss
 
 import org.scalatest.FunSuite
-import rotationsymmetry.sxgboost.utils.TestingUtils
-import TestingUtils._
+import rotationsymmetry.sxgboost.loss.SquareLoss
+import rotationsymmetry.sxgboost.utils.TestingUtils._
 
 class SquareLossSuite extends FunSuite{
 

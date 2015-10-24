@@ -1,5 +1,7 @@
 package rotationsymmetry.sxgboost
 
+import rotationsymmetry.sxgboost.loss.Loss
+
 class WorkingModel(bias: Double, var trees: Array[WorkingNode]) extends Serializable {
   def predict(treePoint: TreePoint): Double = {
     if (trees.nonEmpty){
