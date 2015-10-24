@@ -70,6 +70,12 @@ class SparkXGBoost(val loss: Loss) {
     this.featureSampleRatio = value
     this
   }
+  
+  var sampleRatio: Double = 1.0
+  def setSampleRatio(value: Double): this.type = {
+    this.sampleRatio = value
+    this
+  }
 
   var maxConcurrentNodes: Int = 50
   def setMaxConcurrentNodes(value: Int): this.type = {
@@ -105,7 +111,8 @@ class SparkXGBoost(val loss: Loss) {
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
         val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, featureSampleRatio, nodeBatch.length)
 
-        val lossAggregator = treePoints.treeAggregate(
+        val sampledTreePoints = treePoints.sample(false, sampleRatio)
+        val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
           seqOp = (agg, treePoint) => agg.add(treePoint),
           combOp = (agg1, agg2) => agg1.merge(agg2))

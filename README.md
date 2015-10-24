@@ -19,6 +19,7 @@ SparkXGBoost includes following approach to avoid overfitting
 
 * L2 regularization term on node
 * L1 regularization term on node
+* Stochastic gradient boosting
 * Feature sub sampling for learning nodes
 
 SparkXGBoost is capable of processing multiple learning nodes in the one pass of the training data to improve efficiency. 
@@ -100,24 +101,28 @@ The following parameters can be specified by the setters in `SXGBoost` .
 	* Int, range: [1, ∞]
 * gamma [default=0]
 	* minimum loss reduction required to make a further partition on a leaf node of the tree. 
-	* Double, range: [0,∞]
+	* Double, range: [0, ∞]
 * maxDepth [default=5]
 	* maximum depth of a tree. A tree with one root and two leaves is considered to have depth = 1.
 	* Int, range: [1,∞]
 * minInstanceWeight [default=1]
 	* minimum weight (aka, number of data instance) required to make a further partition on a leaf node of the tree. 
-	* Double, range: [0,∞]
-* featureSubsampleRatio [default=1]
+	* Double, range: [0, ∞]
+* sampleRatio [default=1.0]
+    * sample ratio of rows in bagging
+    * Double, range(0, 1]
+* featureSubsampleRatio [default=1.0]
 	* subsample ratio of columns when constructing each tree.
-	* Double, range: (0,1]
+	* Double, range: (0, 1]
 * lambda [default=0]
 	* L2 regularization term on weights. 
-	* Double, range: [0,∞]
+	* Double, range: [0, ∞]
 * alpha [default=0]
 	* L1 regularization term on weights. 
-	* Double, range: [0,∞]
+	* Double, range: [0, ∞]
 * maxConcurrentNodes[default=50]
 	* maximal number of nodes to be process in one pass of the training data.
+	* Int, [1, ∞]
 
 The following parameters can be specified by the setters in `SXGBoostModel` .
 
