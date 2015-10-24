@@ -3,6 +3,7 @@
 `SparkXGBoost` aims to implement the [gradient boosting](https://en.wikipedia.org/wiki/Gradient_boosting) tree algorithm in [XGBoost](https://github.com/dmlc/xgboost/) on the [Apache Spark](http://spark.apache.org) platform. `SparkXGBoost` is distributed under Apache License 2.0. 
 
 [![Build Status](https://travis-ci.org/rotationsymmetry/SparkXGBoost.svg?branch=master)](https://travis-ci.org/rotationsymmetry/SparkXGBoost) 
+[![codecov.io](https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master)](https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master)
 
 ## Introduction to Gradient Boosting Trees
 The XGBoost team have a fantastic [introduction](http://xgboost.readthedocs.org/en/latest/model.html) to gradient boosting trees, which inspires `SparkXGBoost`. 
