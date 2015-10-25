@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Spark XGboost by rotationsymmetry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Spark XGboost</h1>
+      <h2 class="project-tagline"></h2>
+      <a href="https://github.com/rotationsymmetry/SparkXGBoost" class="btn">View on GitHub</a>
+      <a href="https://github.com/rotationsymmetry/SparkXGBoost/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/rotationsymmetry/SparkXGBoost/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
+<a id="sparkxgboost" class="anchor" href="#sparkxgboost" aria-hidden="true"><span class="octicon octicon-link"></span></a>SparkXGBoost</h1>
+
+<p>SparkXGBoost aims to implement the <a href="https://en.wikipedia.org/wiki/Gradient_boosting">gradient boosting</a> tree algorithm in <a href="https://github.com/dmlc/xgboost/">XGBoost</a> on the <a href="http://spark.apache.org">Apache Spark</a> platform. <code>SparkXGBoost</code> is distributed under Apache License 2.0. </p>
+
+<p><a href="https://travis-ci.org/rotationsymmetry/SparkXGBoost"><img src="https://travis-ci.org/rotationsymmetry/SparkXGBoost.svg?branch=master" alt="Build Status"></a> 
+<a href="https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master"><img src="https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master" alt="codecov.io"></a></p>
+
+<h2>
+<a id="introduction-to-gradient-boosting-trees" class="anchor" href="#introduction-to-gradient-boosting-trees" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction to Gradient Boosting Trees</h2>
+
+<p>The XGBoost team have a fantastic <a href="http://xgboost.readthedocs.org/en/latest/model.html">introduction</a> to gradient boosting trees, which inspires <code>SparkXGBoost</code>. </p>
+
+<h2>
+<a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
+
+<p>SparkXGBoost version 0.1 supports supervised learning using the gradient boosting tree with second order approximation of arbitrary user-defined loss function. The following <code>Loss</code> classes are provided with the package: </p>
+
+<ul>
+<li>
+<code>SquareLoss</code> for linear (normal) regression</li>
+<li>
+<code>LogisticLoss</code> for binary classification</li>
+<li>
+<code>PoissonLoss</code> for Poisson regression of count data</li>
+</ul>
+
+<p>SparkXGBoost includes following approach to avoid overfitting</p>
+
+<ul>
+<li>L2 regularization term on node</li>
+<li>L1 regularization term on node</li>
+<li>Stochastic gradient boosting (similar to Bagging)</li>
+<li>Feature sub sampling for learning nodes</li>
+</ul>
+
+<p>SparkXGBoost is capable of processing multiple learning nodes in the one pass of the training data to improve efficiency. </p>
+
+<h2>
+<a id="components" class="anchor" href="#components" aria-hidden="true"><span class="octicon octicon-link"></span></a>Components</h2>
+
+<p>There are three major components:</p>
+
+<p><code>SparkXGBoost</code> is the learner class. Its constructor takes an instance from the <code>Loss</code> class that defines the loss in gradient boosting.  After fitting the tree ensembles with the training data, it will produce the model as an instance from <code>SparkXGBoost</code> class. </p>
+
+<div class="highlight highlight-source-scala"><pre><span class="pl-k">class</span> <span class="pl-en">SparkXGBoost</span>(<span class="pl-k">val</span> <span class="pl-en">loss</span><span class="pl-k">:</span> <span class="pl-en">Loss</span>){
+  <span class="pl-k">def</span> <span class="pl-en">fit</span>(<span class="pl-v">dataset</span>: <span class="pl-en">DataFrame</span>)<span class="pl-k">:</span> <span class="pl-en">SparkXGBoostModel</span>
+}</pre></div>
+
+<p><code>SparkXGBoostModel</code> contains the trained tree ensemble and is capable to making predictions for the instances.</p>
+
+<div class="highlight highlight-source-scala"><pre><span class="pl-k">class</span> <span class="pl-en">SparkXGBoostModel</span> {
+  <span class="pl-c">// Predict label given the feature of a single instance</span>
+  <span class="pl-k">def</span> <span class="pl-en">predict</span>(<span class="pl-v">features</span>: <span class="pl-en">Vector</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
+  <span class="pl-c">// Provide prediction for the entire dataset</span>
+  <span class="pl-k">def</span> <span class="pl-en">transform</span>(<span class="pl-v">dataset</span>: <span class="pl-en">DataFrame</span>)<span class="pl-k">:</span> <span class="pl-en">SparkXGBoostModel</span>
+}</pre></div>
+
+<p>The abstract class <code>Loss</code> defines the contract for user-defined loss functions. </p>
+
+<div class="highlight highlight-source-scala"><pre><span class="pl-k">abstract</span> <span class="pl-k">class</span> <span class="pl-en">Loss</span>{
+  <span class="pl-c">// The 1st derivative</span>
+  <span class="pl-k">def</span> <span class="pl-en">diff1</span>(<span class="pl-v">label</span>: <span class="pl-k">Double</span>, <span class="pl-v">f</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
+  <span class="pl-c">// The 2nd derivative </span>
+  <span class="pl-k">def</span> <span class="pl-en">diff2</span>(<span class="pl-v">label</span>: <span class="pl-k">Double</span>, <span class="pl-v">f</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
+  <span class="pl-c">// Generate prediction from the score suggested by the tree ensemble</span>
+  <span class="pl-k">def</span> <span class="pl-en">toPrediction</span>(<span class="pl-v">score</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
+  <span class="pl-c">// obtain bias </span>
+  <span class="pl-k">def</span> <span class="pl-en">getInitialBias</span>(<span class="pl-v">input</span>: <span class="pl-en">RDD</span>[<span class="pl-en">LabeledPoint</span>])<span class="pl-k">:</span> <span class="pl-k">Double</span>
+}</pre></div>
+
+<h2>
+<a id="use-sparkxgboost-in-your-project" class="anchor" href="#use-sparkxgboost-in-your-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use SparkXGBoost in Your Project</h2>
+
+<p>Firstly, clone the project from github</p>
+
+<div class="highlight highlight-source-shell"><pre>git clone https://github.com/rotationsymmetry/SparkXGBoost.git</pre></div>
+
+<p>Secondly, compile and package the jar using <a href="http://www.scala-sbt.org">sbt</a></p>
+
+<div class="highlight highlight-source-shell"><pre><span class="pl-c1">cd</span> SparkXGBoost
+sbt package clean package</pre></div>
+
+<p>You should be able to find the jar file in <code>target/target/scala-2.10/sparkxgboost_2.10-0.1.jar</code></p>
+
+<p>Lastly, load it in your Spark project</p>
+
+<ul>
+<li>If you are using spark-shell, you can type in</li>
+</ul>
+
+<div class="highlight highlight-source-shell"><pre>./spark-shell --jars path/to/sparkxgboost_2.10-0.1.jar</pre></div>
+
+<ul>
+<li>If you are building Spark application with sbt, you can put the jar file into the <code>lib</code> folder next to <code>src</code>. Then sbt should be able to put SparkXGBoost in your class path.</li>
+</ul>
+
+<h2>
+<a id="example" class="anchor" href="#example" aria-hidden="true"><span class="octicon octicon-link"></span></a>Example</h2>
+
+<p>Below is an example running SparkXGBoost. <code>trainingData</code> is a <code>DataFrame</code> with the labels stored in a column named "label" and the feature vectors stored in a column name "features".  Similarly, <code>testData</code> is <code>DataFrame</code> with the feature vectors stored in a column name "features". </p>
+
+<p>Pleaes note that the feature vectors have to been indexed before feeding to the <code>SparkXGBoost</code> and <code>SparkXGBoostModel</code> to ensure the categorical variables are correctly encoded with metadata.</p>
+
+<p>In SparkXGBoost 0.1, all categorical variables are assumed to be ordered. Unordered categorical variables can be used for training after being coded with <a href="http://spark.apache.org/docs/latest/ml-features.html#onehotencoder">OneHotEncoder</a>. </p>
+
+<div class="highlight highlight-source-scala"><pre>  <span class="pl-k">val</span> <span class="pl-en">featureIndexer</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">VectorIndexer</span>()
+    .setInputCol(<span class="pl-s"><span class="pl-pds">"</span>features<span class="pl-pds">"</span></span>)
+    .setOutputCol(<span class="pl-s"><span class="pl-pds">"</span>indexedFeatures<span class="pl-pds">"</span></span>)
+    .setMaxCategories(<span class="pl-c1">2</span>)
+    .fit(trainingData)
+
+  <span class="pl-k">val</span> <span class="pl-en">sXGBoost</span> <span class="pl-k">=</span> <span class="pl-k">new</span> <span class="pl-en">SparkXGBoost</span>(<span class="pl-k">new</span> <span class="pl-en">SquareLoss)</span>
+    .setFeaturesCol(<span class="pl-s"><span class="pl-pds">"</span>indexedFeatures<span class="pl-pds">"</span></span>)
+    .setMaxDepth(<span class="pl-c1">1</span>)
+    .setNumTrees(<span class="pl-c1">1</span>)
+  <span class="pl-k">val</span> <span class="pl-en">sXGBoostModel</span> <span class="pl-k">=</span> sXGBoost.fit(
+    featureIndexer.transform(trainingData))
+
+  <span class="pl-k">val</span> <span class="pl-en">predictionData</span> <span class="pl-k">=</span> sXGBoostModel.transform(
+    featureIndexer.transform(testData))</pre></div>
+
+<h2>
+<a id="parameters" class="anchor" href="#parameters" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parameters</h2>
+
+<p>The following parameters can be specified by the setters in <code>SXGBoost</code> .</p>
+
+<ul>
+<li>labelCol[default="label"]
+
+<ul>
+<li>the name of the label column of the <code>DataFrame</code>
+</li>
+<li>String</li>
+</ul>
+</li>
+<li>featuresCol[default="features"]
+
+<ul>
+<li>the name of the feature column of the <code>DataFrame</code>
+</li>
+<li>String</li>
+</ul>
+</li>
+<li>numTrees[default=1]
+
+<ul>
+<li>number of trees to be grown in the boosting algorithm.</li>
+<li>Int, range: [1, ∞]</li>
+</ul>
+</li>
+<li>maxDepth [default=5]
+
+<ul>
+<li>maximum depth of a tree. A tree with one root and two leaves is considered to have depth = 1.</li>
+<li>Int, range: [1,∞]</li>
+</ul>
+</li>
+<li>lambda [default=0]
+
+<ul>
+<li>L2 regularization term on weights. </li>
+<li>Double, range: [0, ∞]</li>
+</ul>
+</li>
+<li>alpha [default=0]
+
+<ul>
+<li>L1 regularization term on weights. </li>
+<li>Double, range: [0, ∞]</li>
+</ul>
+</li>
+<li>gamma [default=0]
+
+<ul>
+<li>minimum loss reduction required to make a further partition on a leaf node of the tree. </li>
+<li>Double, range: [0, ∞]</li>
+</ul>
+</li>
+<li>minInstanceWeight [default=1]
+
+<ul>
+<li>minimum weight (aka, number of data instance) required to make a further partition on a leaf node of the tree. </li>
+<li>Double, range: [0, ∞]</li>
+</ul>
+</li>
+<li>sampleRatio [default=1.0]
+
+<ul>
+<li>sample ratio of rows in bagging</li>
+<li>Double, range(0, 1]</li>
+</ul>
+</li>
+<li>featureSubsampleRatio [default=1.0]
+
+<ul>
+<li>subsample ratio of columns when constructing each tree.</li>
+<li>Double, range: (0, 1]</li>
+</ul>
+</li>
+<li>maxConcurrentNodes[default=50]
+
+<ul>
+<li>maximal number of nodes to be process in one pass of the training data.</li>
+<li>Int, [1, ∞]</li>
+</ul>
+</li>
+<li>maxBins [default=32]
+
+<ul>
+<li>maximal number of bins for continuous variables.</li>
+<li>Int, [2, ∞]</li>
+</ul>
+</li>
+</ul>
+
+<p>The following parameters can be specified by the setters in <code>SXGBoostModel</code> .</p>
+
+<ul>
+<li>predictionCol[default="prediction"]
+
+<ul>
+<li>the name of the prediction column of the <code>DataFrame</code>
+</li>
+<li>String</li>
+</ul>
+</li>
+<li>featuresCol[default="features"]
+
+<ul>
+<li>the name of the feature column of the  <code>DataFrame</code>
+</li>
+<li>String</li>
+</ul>
+</li>
+</ul>
+
+<h2>
+<a id="roadmap" class="anchor" href="#roadmap" aria-hidden="true"><span class="octicon octicon-link"></span></a>Roadmap</h2>
+
+<p>I have following tentative roadmap for the upcoming releases:</p>
+
+<p>0.2</p>
+
+<ul>
+<li>Support step size</li>
+</ul>
+
+<p>0.3</p>
+
+<ul>
+<li>Post-pruning</li>
+</ul>
+
+<p>0.4</p>
+
+<ul>
+<li>Automatically determine the maximal number of current nodes by memory management</li>
+</ul>
+
+<p>0.5</p>
+
+<ul>
+<li>Multi-class classification</li>
+</ul>
+
+<p>0.6 </p>
+
+<ul>
+<li>Unordered categorical variables</li>
+</ul>
+
+<h2>
+<a id="bugs-and-improvements" class="anchor" href="#bugs-and-improvements" aria-hidden="true"><span class="octicon octicon-link"></span></a>Bugs and Improvements</h2>
+
+<p>Many thanks for testing SparkXGBoost! </p>
+
+<p>You can file bug report or provide suggestions using <a href="https://github.com/rotationsymmetry/SparkXGBoost/issues">github issues</a>. </p>
+
+<p>If you would like to improve the codebase, please don't hesitate to submit a pull request. </p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/rotationsymmetry/SparkXGBoost">Spark XGboost</a> is maintained by <a href="https://github.com/rotationsymmetry">rotationsymmetry</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
