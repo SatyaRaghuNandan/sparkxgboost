@@ -42,7 +42,7 @@ class WithDecisionTreeSuite extends FunSuite with TestData with MLlibTestSparkCo
 
   test("Compare with DecisionTree using random data") {
 
-    val data = sqlContext.createDataFrame(randomLabelPointRDD(sc, 20, 10, 2, 999))
+    val data = sqlContext.createDataFrame(randomLabelPointRDD(sc, 40, 10, 2, 999))
 
     val featureIndexer = new VectorIndexer()
       .setInputCol("features")

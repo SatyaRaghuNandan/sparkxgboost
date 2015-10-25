@@ -36,7 +36,7 @@ class SparkXGBoost(val loss: Loss) {
   }
 
   var labelCol: String ="label"
-  def setInputCol(value: String): this.type = {
+  def setLabelCol(value: String): this.type = {
     this.labelCol = value
     this
   }
