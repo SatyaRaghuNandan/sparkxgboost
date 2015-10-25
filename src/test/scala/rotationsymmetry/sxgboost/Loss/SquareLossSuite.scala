@@ -1,4 +1,4 @@
-package rotationsymmetry.sxgboost.Loss
+package rotationsymmetry.sxgboost.loss
 
 import org.scalatest.FunSuite
 import rotationsymmetry.sxgboost.loss.SquareLoss

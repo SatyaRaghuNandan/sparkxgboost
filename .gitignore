@@ -1,4 +1,4 @@
 .idea
 target
 *.DS_Store
-sample_libsvm_data.txt
+src/test/scala/rotationsymmetry/sxgboost/examples*

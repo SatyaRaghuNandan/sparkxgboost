@@ -1,8 +1,8 @@
 package rotationsymmetry.sxgboost
 
-import org.apache.spark.mllib.linalg.Vector
+import org.apache.spark.mllib.linalg.{Vector, VectorUDT}
 import org.apache.spark.sql.DataFrame
-import org.apache.spark.sql.functions.{udf, col}
+import org.apache.spark.sql.functions.{col, udf}
 import rotationsymmetry.sxgboost.loss.Loss
 
 class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss) extends Serializable{
@@ -27,6 +27,8 @@ class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss)
     loss.toPrediction(score)
   }
   def transform(dataset: DataFrame): DataFrame = {
+    SchemaUtils.checkColumnType(dataset.schema, featuresCol, new VectorUDT)
+
     val bcastModel = dataset.sqlContext.sparkContext.broadcast(this)
     val predictUDF = udf { (features: Any) =>
       bcastModel.value.predict(features.asInstanceOf[Vector])

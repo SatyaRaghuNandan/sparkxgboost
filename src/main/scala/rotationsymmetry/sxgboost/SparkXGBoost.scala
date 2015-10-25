@@ -1,9 +1,10 @@
 package rotationsymmetry.sxgboost
 
+import org.apache.spark.mllib.linalg.{Vector, VectorUDT}
 import org.apache.spark.mllib.regression.LabeledPoint
-import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.{Row, DataFrame}
+import org.apache.spark.sql.types.DoubleType
+import org.apache.spark.sql.{DataFrame, Row}
 import rotationsymmetry.sxgboost.loss.Loss
 
 import scala.collection.mutable
@@ -84,6 +85,10 @@ class SparkXGBoost(val loss: Loss) {
   }
 
   def fit(dataset: DataFrame): SparkXGBoostModel = {
+
+    // Check dataset schema
+    SchemaUtils.checkColumnType(dataset.schema, featuresCol, new VectorUDT)
+    SchemaUtils.checkColumnType(dataset.schema, labelCol, DoubleType)
 
     val categoricalFeatures: Map[Int, Int] =
       MetadataUtils.getCategoricalFeatures(dataset.schema(featuresCol))

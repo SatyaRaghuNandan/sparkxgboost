@@ -1,4 +1,4 @@
-package rotationsymmetry.sxgboost.Loss
+package rotationsymmetry.sxgboost.loss
 
 trait NumericDiff {
   def numericLoss(label: Double, f: Double): Double

@@ -1,4 +1,4 @@
-package rotationsymmetry.sxgboost.Loss
+package rotationsymmetry.sxgboost.loss
 
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
