@@ -3,7 +3,6 @@ package rotationsymmetry.sxgboost.loss
 import org.apache.spark.mllib.linalg.Vectors
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.scalatest.FunSuite
-import rotationsymmetry.sxgboost.loss.LogisticLoss
 import rotationsymmetry.sxgboost.utils.MLlibTestSparkContext
 import rotationsymmetry.sxgboost.utils.TestingUtils._
 
