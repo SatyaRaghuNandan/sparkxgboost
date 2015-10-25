@@ -22,7 +22,10 @@
       <h1>
 <a id="sparkxgboost" class="anchor" href="#sparkxgboost" aria-hidden="true"><span class="octicon octicon-link"></span></a>SparkXGBoost</h1>
 
-<p>SparkXGBoost aims to implement the <a href="https://en.wikipedia.org/wiki/Gradient_boosting">gradient boosting</a> tree algorithm in <a href="https://github.com/dmlc/xgboost/">XGBoost</a> on the <a href="http://spark.apache.org">Apache Spark</a> platform. <code>SparkXGBoost</code> is distributed under Apache License 2.0. </p>
+<p>SparkXGBoost is a <a href="http://spark.apache.org">Spark</a> implementation of <a href="https://en.wikipedia.org/wiki/Gradient_boosting">gradient boosting tree</a> using 2nd order approximation 
+of arbitrary user-defined loss function. SparkXGBoost is inspired by the <a href="https://github.com/dmlc/xgboost/">XGBoost</a> project.</p>
+
+<p><code>SparkXGBoost</code> is distributed under Apache License 2.0. </p>
 
 <p><a href="https://travis-ci.org/rotationsymmetry/SparkXGBoost"><img src="https://travis-ci.org/rotationsymmetry/SparkXGBoost.svg?branch=master" alt="Build Status"></a> 
 <a href="https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master"><img src="https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master" alt="codecov.io"></a></p>
@@ -35,7 +38,7 @@
 <h2>
 <a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
 
-<p>SparkXGBoost version 0.1 supports supervised learning using the gradient boosting tree with second order approximation of arbitrary user-defined loss function. The following <code>Loss</code> classes are provided with the package: </p>
+<p>SparkXGBoost version 0.1 supports supervised learning with the gradient boosting tree using 2nd order approximation of arbitrary user-defined loss function. SparkXGBoost ships with The following <code>Loss</code> classes: </p>
 
 <ul>
 <li>
@@ -46,7 +49,7 @@
 <code>PoissonLoss</code> for Poisson regression of count data</li>
 </ul>
 
-<p>SparkXGBoost includes following approach to avoid overfitting</p>
+<p>To avoid overfitting, SparkXGBoost employs the following regularization methods: </p>
 
 <ul>
 <li>L2 regularization term on node</li>
@@ -93,7 +96,7 @@
 <h2>
 <a id="use-sparkxgboost-in-your-project" class="anchor" href="#use-sparkxgboost-in-your-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use SparkXGBoost in Your Project</h2>
 
-<p>Firstly, clone the project from github</p>
+<p>Firstly, clone the project from Github</p>
 
 <div class="highlight highlight-source-shell"><pre>git clone https://github.com/rotationsymmetry/SparkXGBoost.git</pre></div>
 
@@ -308,6 +311,16 @@ sbt package clean package</pre></div>
 
     </section>
 
-  
+            <script type="text/javascript">
+            var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+            document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+          </script>
+          <script type="text/javascript">
+            try {
+              var pageTracker = _gat._getTracker("UA-64358859-2");
+            pageTracker._trackPageview();
+            } catch(err) {}
+          </script>
+
   </body>
 </html>
