@@ -19,7 +19,7 @@ SparkXGBoost includes following approach to avoid overfitting
 
 * L2 regularization term on node
 * L1 regularization term on node
-* Stochastic gradient boosting
+* Stochastic gradient boosting (similar to Bagging)
 * Feature sub sampling for learning nodes
 
 SparkXGBoost is capable of processing multiple learning nodes in the one pass of the training data to improve efficiency. 
@@ -60,8 +60,35 @@ abstract class Loss{
   def getInitialBias(input: RDD[LabeledPoint]): Double
 }
 ```
-  
-## Usage Guide and Example
+
+## Use SparkXGBoost in Your Project
+
+Firstly, clone the project from github
+
+``` bash
+git clone https://github.com/rotationsymmetry/SparkXGBoost.git
+```
+
+Secondly, compile and package the jar using [sbt](http://www.scala-sbt.org)
+
+``` bash 
+cd SparkXGBoost
+sbt package clean package
+```
+
+You should be able to find the jar file in `target/target/scala-2.10/sparkxgboost_2.10-0.1.jar`
+
+Lastly, load it in your Spark project
+
+* If you are using spark-shell, you can type in
+
+``` bash
+./spark-shell --jars path/to/sparkxgboost_2.10-0.1.jar
+```
+
+* If you are building Spark application with sbt, you can put the jar file into the `lib` folder next to `src`. Then sbt should be able to put SparkXGBoost in your class path.
+
+## Example
 
 Below is an example running SparkXGBoost. `trainingData` is a `DataFrame` with the labels stored in a column named "label" and the feature vectors stored in a column name "features".  Similarly, `testData` is `DataFrame` with the feature vectors stored in a column name "features". 
 
@@ -99,12 +126,18 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * numTrees[default=1]
 	* number of trees to be grown in the boosting algorithm.
 	* Int, range: [1, ∞]
-* gamma [default=0]
-	* minimum loss reduction required to make a further partition on a leaf node of the tree. 
-	* Double, range: [0, ∞]
 * maxDepth [default=5]
 	* maximum depth of a tree. A tree with one root and two leaves is considered to have depth = 1.
 	* Int, range: [1,∞]
+* lambda [default=0]
+	* L2 regularization term on weights. 
+	* Double, range: [0, ∞]
+* alpha [default=0]
+	* L1 regularization term on weights. 
+	* Double, range: [0, ∞]
+* gamma [default=0]
+	* minimum loss reduction required to make a further partition on a leaf node of the tree. 
+	* Double, range: [0, ∞]
 * minInstanceWeight [default=1]
 	* minimum weight (aka, number of data instance) required to make a further partition on a leaf node of the tree. 
 	* Double, range: [0, ∞]
@@ -114,16 +147,13 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * featureSubsampleRatio [default=1.0]
 	* subsample ratio of columns when constructing each tree.
 	* Double, range: (0, 1]
-* lambda [default=0]
-	* L2 regularization term on weights. 
-	* Double, range: [0, ∞]
-* alpha [default=0]
-	* L1 regularization term on weights. 
-	* Double, range: [0, ∞]
 * maxConcurrentNodes[default=50]
 	* maximal number of nodes to be process in one pass of the training data.
 	* Int, [1, ∞]
-
+* maxBins [default=32]
+    * maximal number of bins for continuous variables.
+    * Int, [2, ∞]
+    
 The following parameters can be specified by the setters in `SXGBoostModel` .
 
 * predictionCol[default="prediction"]
@@ -138,7 +168,7 @@ I have following tentative roadmap for the upcoming releases:
 
 0.2
 
-* Support step size.
+* Support step size
 
 0.3
 
@@ -146,7 +176,7 @@ I have following tentative roadmap for the upcoming releases:
 
 0.4
 
-* Automatically determine the maximal number of current nodes by memory management.
+* Automatically determine the maximal number of current nodes by memory management
 
 0.5
 
