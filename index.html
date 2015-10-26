@@ -31,9 +31,9 @@ of arbitrary user-defined loss function. SparkXGBoost is inspired by the <a href
 <a href="https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master"><img src="https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master" alt="codecov.io"></a></p>
 
 <h2>
-<a id="introduction-to-gradient-boosting-trees" class="anchor" href="#introduction-to-gradient-boosting-trees" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction to Gradient Boosting Trees</h2>
+<a id="what-is-gradient-boosting-tree" class="anchor" href="#what-is-gradient-boosting-tree" aria-hidden="true"><span class="octicon octicon-link"></span></a>What is Gradient Boosting Tree?</h2>
 
-<p>The XGBoost team have a fantastic <a href="http://xgboost.readthedocs.org/en/latest/model.html">introduction</a> to gradient boosting trees, which inspires <code>SparkXGBoost</code>. </p>
+<p>The XGBoost team have a fantastic <a href="http://xgboost.readthedocs.org/en/latest/model.html">introduction</a> to gradient boosting trees. </p>
 
 <h2>
 <a id="features" class="anchor" href="#features" aria-hidden="true"><span class="octicon octicon-link"></span></a>Features</h2>
@@ -89,14 +89,14 @@ of arbitrary user-defined loss function. SparkXGBoost is inspired by the <a href
   <span class="pl-k">def</span> <span class="pl-en">diff2</span>(<span class="pl-v">label</span>: <span class="pl-k">Double</span>, <span class="pl-v">f</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
   <span class="pl-c">// Generate prediction from the score suggested by the tree ensemble</span>
   <span class="pl-k">def</span> <span class="pl-en">toPrediction</span>(<span class="pl-v">score</span>: <span class="pl-k">Double</span>)<span class="pl-k">:</span> <span class="pl-k">Double</span>
-  <span class="pl-c">// obtain bias </span>
+  <span class="pl-c">// Calculate bias </span>
   <span class="pl-k">def</span> <span class="pl-en">getInitialBias</span>(<span class="pl-v">input</span>: <span class="pl-en">RDD</span>[<span class="pl-en">LabeledPoint</span>])<span class="pl-k">:</span> <span class="pl-k">Double</span>
 }</pre></div>
 
 <h2>
 <a id="use-sparkxgboost-in-your-project" class="anchor" href="#use-sparkxgboost-in-your-project" aria-hidden="true"><span class="octicon octicon-link"></span></a>Use SparkXGBoost in Your Project</h2>
 
-<p>Firstly, clone the project from Github</p>
+<p>Firstly, clone the project from GitHub</p>
 
 <div class="highlight highlight-source-shell"><pre>git clone https://github.com/rotationsymmetry/SparkXGBoost.git</pre></div>
 
@@ -150,7 +150,7 @@ sbt package clean package</pre></div>
 <p>The following parameters can be specified by the setters in <code>SXGBoost</code> .</p>
 
 <ul>
-<li>labelCol[default="label"]
+<li>labelCol [default="label"]
 
 <ul>
 <li>the name of the label column of the <code>DataFrame</code>
@@ -158,7 +158,7 @@ sbt package clean package</pre></div>
 <li>String</li>
 </ul>
 </li>
-<li>featuresCol[default="features"]
+<li>featuresCol [default="features"]
 
 <ul>
 <li>the name of the feature column of the <code>DataFrame</code>
@@ -166,7 +166,7 @@ sbt package clean package</pre></div>
 <li>String</li>
 </ul>
 </li>
-<li>numTrees[default=1]
+<li>numTrees [default=1]
 
 <ul>
 <li>number of trees to be grown in the boosting algorithm.</li>
@@ -222,7 +222,7 @@ sbt package clean package</pre></div>
 <li>Double, range: (0, 1]</li>
 </ul>
 </li>
-<li>maxConcurrentNodes[default=50]
+<li>maxConcurrentNodes [default=50]
 
 <ul>
 <li>maximal number of nodes to be process in one pass of the training data.</li>
@@ -241,7 +241,7 @@ sbt package clean package</pre></div>
 <p>The following parameters can be specified by the setters in <code>SXGBoostModel</code> .</p>
 
 <ul>
-<li>predictionCol[default="prediction"]
+<li>predictionCol [default="prediction"]
 
 <ul>
 <li>the name of the prediction column of the <code>DataFrame</code>
@@ -249,7 +249,7 @@ sbt package clean package</pre></div>
 <li>String</li>
 </ul>
 </li>
-<li>featuresCol[default="features"]
+<li>featuresCol [default="features"]
 
 <ul>
 <li>the name of the feature column of the  <code>DataFrame</code>
@@ -299,7 +299,7 @@ sbt package clean package</pre></div>
 
 <p>Many thanks for testing SparkXGBoost! </p>
 
-<p>You can file bug report or provide suggestions using <a href="https://github.com/rotationsymmetry/SparkXGBoost/issues">github issues</a>. </p>
+<p>You can file bug report or provide suggestions using <a href="https://github.com/rotationsymmetry/SparkXGBoost/issues">GitHub Issues</a>. </p>
 
 <p>If you would like to improve the codebase, please don't hesitate to submit a pull request. </p>
 
