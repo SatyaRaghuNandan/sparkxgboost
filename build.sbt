@@ -4,11 +4,9 @@ version := "0.1"
 
 scalaVersion := "2.10.6"
 
-sparkVersion := "1.5.1"
-
 val testSparkVersion = settingKey[String]("The version of Spark to test against.")
 
-testSparkVersion := sys.props.getOrElse("spark.testVersion", sparkVersion.value)
+testSparkVersion := sys.props.getOrElse("spark.testVersion", "1.5.1")
 
 parallelExecution := false
 
