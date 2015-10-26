@@ -1,9 +1,12 @@
 language: scala
 scala:
    - 2.10.6
+env:
+   - TEST_SPARK_VERSION="1.5.1"
+   - TEST_SPARK_VERSION="1.4.1"
 before_install:
   - pip install --user codecov
 script:
-  - sbt clean coverage test
+  - sbt -Dspark.testVersion=$TEST_SPARK_VERSION ++$TRAVIS_SCALA_VERSION clean coverage test
 after_success:
   - codecov
