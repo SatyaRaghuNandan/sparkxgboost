@@ -1,21 +1,24 @@
 # SparkXGBoost 
 
-SparkXGBoost aims to implement the [gradient boosting](https://en.wikipedia.org/wiki/Gradient_boosting) tree algorithm in [XGBoost](https://github.com/dmlc/xgboost/) on the [Apache Spark](http://spark.apache.org) platform. `SparkXGBoost` is distributed under Apache License 2.0. 
+SparkXGBoost is a [Spark](http://spark.apache.org) implementation of [gradient boosting tree](https://en.wikipedia.org/wiki/Gradient_boosting) using 2nd order approximation 
+of arbitrary user-defined loss function. SparkXGBoost is inspired by the [XGBoost](https://github.com/dmlc/xgboost/) project.
+
+`SparkXGBoost` is distributed under Apache License 2.0. 
 
 [![Build Status](https://travis-ci.org/rotationsymmetry/SparkXGBoost.svg?branch=master)](https://travis-ci.org/rotationsymmetry/SparkXGBoost) 
 [![codecov.io](https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master)](https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master)
 
-## Introduction to Gradient Boosting Trees
-The XGBoost team have a fantastic [introduction](http://xgboost.readthedocs.org/en/latest/model.html) to gradient boosting trees, which inspires `SparkXGBoost`. 
+## What is Gradient Boosting Tree?
+The XGBoost team have a fantastic [introduction](http://xgboost.readthedocs.org/en/latest/model.html) to gradient boosting trees. 
 
 ## Features
-SparkXGBoost version 0.1 supports supervised learning using the gradient boosting tree with second order approximation of arbitrary user-defined loss function. The following `Loss` classes are provided with the package: 
+SparkXGBoost version 0.1 supports supervised learning with the gradient boosting tree using 2nd order approximation of arbitrary user-defined loss function. SparkXGBoost ships with The following `Loss` classes: 
 
 * `SquareLoss` for linear (normal) regression
 * `LogisticLoss` for binary classification
 * `PoissonLoss` for Poisson regression of count data
 
-SparkXGBoost includes following approach to avoid overfitting
+To avoid overfitting, SparkXGBoost employs the following regularization methods: 
 
 * L2 regularization term on node
 * L1 regularization term on node
@@ -56,14 +59,14 @@ abstract class Loss{
   def diff2(label: Double, f: Double): Double
   // Generate prediction from the score suggested by the tree ensemble
   def toPrediction(score: Double): Double
-  // obtain bias 
+  // Calculate bias 
   def getInitialBias(input: RDD[LabeledPoint]): Double
 }
 ```
 
 ## Use SparkXGBoost in Your Project
 
-Firstly, clone the project from github
+Firstly, clone the project from GitHub
 
 ``` bash
 git clone https://github.com/rotationsymmetry/SparkXGBoost.git
@@ -117,13 +120,13 @@ In SparkXGBoost 0.1, all categorical variables are assumed to be ordered. Unorde
 ## Parameters
 The following parameters can be specified by the setters in `SXGBoost` .
 
-* labelCol[default="label"]
+* labelCol [default="label"]
 	* the name of the label column of the `DataFrame`
 	* String
-* featuresCol[default="features"]
+* featuresCol [default="features"]
 	* the name of the feature column of the `DataFrame`
 	* String
-* numTrees[default=1]
+* numTrees [default=1]
 	* number of trees to be grown in the boosting algorithm.
 	* Int, range: [1, ∞]
 * maxDepth [default=5]
@@ -147,7 +150,7 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * featureSubsampleRatio [default=1.0]
 	* subsample ratio of columns when constructing each tree.
 	* Double, range: (0, 1]
-* maxConcurrentNodes[default=50]
+* maxConcurrentNodes [default=50]
 	* maximal number of nodes to be process in one pass of the training data.
 	* Int, [1, ∞]
 * maxBins [default=32]
@@ -156,10 +159,10 @@ The following parameters can be specified by the setters in `SXGBoost` .
     
 The following parameters can be specified by the setters in `SXGBoostModel` .
 
-* predictionCol[default="prediction"]
+* predictionCol [default="prediction"]
 	* the name of the prediction column of the `DataFrame`
 	* String
-* featuresCol[default="features"]
+* featuresCol [default="features"]
 	* the name of the feature column of the  `DataFrame`
 	* String
 
@@ -190,6 +193,6 @@ I have following tentative roadmap for the upcoming releases:
  
 Many thanks for testing SparkXGBoost! 
 
-You can file bug report or provide suggestions using [github issues](https://github.com/rotationsymmetry/SparkXGBoost/issues). 
+You can file bug report or provide suggestions using [GitHub Issues](https://github.com/rotationsymmetry/SparkXGBoost/issues). 
 
 If you would like to improve the codebase, please don't hesitate to submit a pull request. 
