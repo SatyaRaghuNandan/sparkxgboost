@@ -64,6 +64,9 @@ abstract class Loss{
 }
 ```
 
+## Compatibility 
+SparkXGBoost has been tested with Spark 1.5.1/1.4.1 and Scala 2.10.
+
 ## Use SparkXGBoost in Your Project
 
 Firstly, clone the project from GitHub
