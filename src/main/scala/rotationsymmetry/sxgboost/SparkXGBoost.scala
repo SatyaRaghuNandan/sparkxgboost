@@ -5,6 +5,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.types.DoubleType
 import org.apache.spark.sql.{DataFrame, Row}
+import org.apache.spark.storage.StorageLevel
 import rotationsymmetry.sxgboost.loss.Loss
 
 import scala.collection.mutable
@@ -106,6 +107,7 @@ class SparkXGBoost(val loss: Loss) {
     val input: RDD[LabeledPoint] = dataset.select(labelCol, featuresCol).map {
       case Row(label: Double, features: Vector) => LabeledPoint(label, features)
     }
+    input.persist(StorageLevel.MEMORY_AND_DISK)
 
     val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, maxBins)
 
@@ -127,6 +129,7 @@ class SparkXGBoost(val loss: Loss) {
         val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, featureSampleRatio, nodeBatch.length)
 
         val sampledTreePoints = treePoints.sample(false, sampleRatio)
+        // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
           seqOp = (agg, treePoint) => agg.add(treePoint),
@@ -169,6 +172,8 @@ class SparkXGBoost(val loss: Loss) {
         treeIdx = numTrees // breaking the loop
       }
     }
+
+    input.unpersist()
 
     workingModel.toSparkXGBoostModel(splits, loss).setFeaturesCol(featuresCol)
   }
