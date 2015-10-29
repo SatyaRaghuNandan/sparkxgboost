@@ -1,18 +1,25 @@
 name := "SparkXGBoost"
 
-version := "0.1"
+spName := "rotationsymmetry/SparkXGBoost"
+
+organization := "rotationsymmetry"
+
+version := "0.1.1"
 
 scalaVersion := "2.10.6"
 
-val testSparkVersion = settingKey[String]("The version of Spark to test against.")
+sparkVersion := sys.props.getOrElse("spark.testVersion", "1.5.1") 
 
-testSparkVersion := sys.props.getOrElse("spark.testVersion", "1.5.1")
+sparkComponents ++= Seq("core", "mllib")
+
+spAppendScalaVersion := true
 
 parallelExecution := false
 
 libraryDependencies ++= Seq(
-  "org.apache.spark" % "spark-core_2.10" % testSparkVersion.value,
-  "org.apache.spark" % "spark-mllib_2.10" % testSparkVersion.value,
-  "org.scalatest" % "scalatest_2.10" % "2.2.4" % "test",
-  "com.databricks" % "spark-csv_2.10" % "1.2.0" % "test"
+  "org.scalatest" % "scalatest_2.10" % "2.2.4" % "test"
 )
+
+credentials += Credentials(Path.userHome / "Documents" / "git" / "token")
+
+licenses += "Apache-2.0" -> url("http://opensource.org/licenses/Apache-2.0")
