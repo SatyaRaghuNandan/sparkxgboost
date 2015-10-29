@@ -102,6 +102,12 @@ class SparkXGBoost(val loss: Loss) {
     this
   }
 
+  var seed: Long = new Random().nextLong()
+  def setSeed(value: Long): this.type = {
+    this.seed = value
+    this
+  }
+
   def fit(dataset: DataFrame): SparkXGBoostModel = {
 
     // Check dataset schema
@@ -116,7 +122,7 @@ class SparkXGBoost(val loss: Loss) {
     }
     input.persist(StorageLevel.MEMORY_AND_DISK)
 
-    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, maxBins)
+    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, maxBins, seed)
 
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
@@ -135,7 +141,7 @@ class SparkXGBoost(val loss: Loss) {
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
         val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, featureSampleRatio, nodeBatch.length)
 
-        val sampledTreePoints = treePoints.sample(false, sampleRatio)
+        val sampledTreePoints = treePoints.sample(false, sampleRatio, seed)
         // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(

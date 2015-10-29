@@ -144,6 +144,9 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * gamma [default=0]
 	* minimum loss reduction required to make a further partition on a leaf node of the tree. 
 	* Double, range: [0, ∞]
+* eta [default=1.0]
+    * learning rate, or step size for gradient boosting. 
+    * Double, range: (0, 1]
 * minInstanceWeight [default=1]
 	* minimum weight (aka, number of data instance) required to make a further partition on a leaf node of the tree. 
 	* Double, range: [0, ∞]
@@ -159,6 +162,9 @@ The following parameters can be specified by the setters in `SXGBoost` .
 * maxBins [default=32]
     * maximal number of bins for continuous variables.
     * Int, [2, ∞]
+* seed [default = some random value]
+    * seed of sampling.
+    * Long
     
 The following parameters can be specified by the setters in `SXGBoostModel` .
 

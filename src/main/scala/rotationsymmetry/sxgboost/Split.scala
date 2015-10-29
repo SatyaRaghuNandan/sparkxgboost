@@ -5,6 +5,7 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable
+import scala.util.Random
 
 /**
  * Interface for a "Split," which specifies a test made at a decision tree node
@@ -34,7 +35,8 @@ object OrderedSplit {
   def createOrderedSplits(
        input: RDD[LabeledPoint],
        categoricalFeatures: Map[Int, Int],
-       maxBins: Int): Array[Array[Split]] = {
+       maxBins: Int,
+       seed: Long = new Random().nextLong()): Array[Array[Split]] = {
 
     val requiredSamples = math.max(maxBins * maxBins, 10000)
     val numSamples = input.count()
@@ -44,7 +46,7 @@ object OrderedSplit {
       1.0
     }
 
-    val sampledInput = input.sample(false, fraction, 1).collect()
+    val sampledInput = input.sample(false, fraction, seed).collect()
 
     val numFeatures = sampledInput.head.features.size
     val splits = new Array[Array[Split]](numFeatures)
