@@ -41,6 +41,13 @@ class SparkXGBoost(val loss: Loss) {
     this
   }
 
+  var eta: Double = 1.0
+  def setEta(value: Double): this.type = {
+    require(value > 0 && value <= 1.0)
+    this.eta = value
+    this
+  }
+
   var labelCol: String ="label"
   def setLabelCol(value: String): this.type = {
     this.labelCol = value
@@ -147,12 +154,12 @@ class SparkXGBoost(val loss: Loss) {
               node.split = Some(splitInfo.split)
 
               val leftChild = new WorkingNode(node.depth + 1)
-              leftChild.prediction = Some(splitInfo.leftPrediction)
+              leftChild.prediction = Some(splitInfo.leftPrediction * eta)
               leftChild.weight = Some(splitInfo.leftWeight)
               node.leftChild = Some(leftChild)
 
               val rightChild = new WorkingNode(node.depth + 1)
-              rightChild.prediction = Some(splitInfo.rightPrediction)
+              rightChild.prediction = Some(splitInfo.rightPrediction * eta)
               rightChild.weight = Some(splitInfo.rightWeight)
               node.rightChild = Some(rightChild)
 
