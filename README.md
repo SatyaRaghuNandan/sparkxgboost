@@ -12,7 +12,7 @@ of arbitrary user-defined loss function. SparkXGBoost is inspired by the [XGBoos
 The XGBoost team have a fantastic [introduction](http://xgboost.readthedocs.org/en/latest/model.html) to gradient boosting trees. 
 
 ## Features
-SparkXGBoost version 0.1 supports supervised learning with the gradient boosting tree using 2nd order approximation of arbitrary user-defined loss function. SparkXGBoost ships with The following `Loss` classes: 
+SparkXGBoost version supports supervised learning with the gradient boosting tree using 2nd order approximation of arbitrary user-defined loss function. SparkXGBoost ships with The following `Loss` classes: 
 
 * `SquareLoss` for linear (normal) regression
 * `LogisticLoss` for binary classification
@@ -82,14 +82,14 @@ cd SparkXGBoost
 sbt package clean package
 ```
 
-You should be able to find the jar file in `target/target/scala-2.10/sparkxgboost_2.10-0.1.jar`
+You should be able to find the jar file in `target/target/scala-2.10/sparkxgboost_2.10-0.2.jar`
 
 Lastly, load it in your Spark project
 
 * If you are using spark-shell, you can type in
 
 ``` bash
-./spark-shell --jars path/to/sparkxgboost_2.10-0.1.jar
+./spark-shell --jars path/to/sparkxgboost_2.10-0.2.jar
 ```
 
 * If you are building Spark application with sbt, you can put the jar file into the `lib` folder next to `src`. Then sbt should be able to put SparkXGBoost in your class path.
@@ -100,7 +100,7 @@ Below is an example running SparkXGBoost. `trainingData` is a `DataFrame` with t
 
 Pleaes note that the feature vectors have to been indexed before feeding to the `SparkXGBoost` and `SparkXGBoostModel` to ensure the categorical variables are correctly encoded with metadata.
 
-In SparkXGBoost 0.1, all categorical variables are assumed to be ordered. Unordered categorical variables can be used for training after being coded with [OneHotEncoder](http://spark.apache.org/docs/latest/ml-features.html#onehotencoder). 
+Currently, all categorical variables are assumed to be ordered. Unordered categorical variables can be used for training after being coded with [OneHotEncoder](http://spark.apache.org/docs/latest/ml-features.html#onehotencoder). 
 
 ``` scala
   val featureIndexer = new VectorIndexer()
@@ -177,10 +177,6 @@ The following parameters can be specified by the setters in `SXGBoostModel` .
 
 ## Roadmap
 I have following tentative roadmap for the upcoming releases:
-
-0.2
-
-* Support step size
 
 0.3
 
