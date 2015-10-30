@@ -2,7 +2,7 @@ package rotationsymmetry.sxgboost
 
 import org.apache.spark.sql.types.{DataType, StructType}
 
-object SchemaUtils {
+private[sxgboost] object SchemaUtils {
 
   /**
    * Check whether the given schema contains a column of the required data type.

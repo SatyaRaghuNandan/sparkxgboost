@@ -3,12 +3,12 @@ package rotationsymmetry.sxgboost
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
-class MetaData(
+private[sxgboost] class MetaData(
       val numFeatures: Int,
       val numBins: Array[Int]) extends Serializable {
 }
 
-object MetaData {
+private[sxgboost] object MetaData {
 
   def getMetaData(input: RDD[LabeledPoint], splits: Array[Array[Split]]): MetaData = {
     val numFeatures = input.first().features.size

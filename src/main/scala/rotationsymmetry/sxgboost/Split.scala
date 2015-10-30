@@ -11,7 +11,7 @@ import scala.util.Random
  * Interface for a "Split," which specifies a test made at a decision tree node
  * to choose the left or right path.
  */
-sealed trait Split extends Serializable {
+private[sxgboost] sealed trait Split extends Serializable {
 
   /** Index of feature which this split tests */
   def featureIndex: Int
@@ -24,14 +24,14 @@ sealed trait Split extends Serializable {
 
 }
 
-class OrderedSplit(override val featureIndex: Int, val threshold: Double) extends Split {
+private[sxgboost] class OrderedSplit(override val featureIndex: Int, val threshold: Double) extends Split {
 
   override def shouldGoLeft(features: Vector): Boolean = {
     features(featureIndex) <= threshold
   }
 }
 
-object OrderedSplit {
+private[sxgboost] object OrderedSplit {
   def createOrderedSplits(
        input: RDD[LabeledPoint],
        categoricalFeatures: Map[Int, Int],

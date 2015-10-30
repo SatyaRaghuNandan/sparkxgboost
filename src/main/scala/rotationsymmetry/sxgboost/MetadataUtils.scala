@@ -6,7 +6,7 @@ import org.apache.spark.sql.types.StructField
 import scala.collection.immutable.HashMap
 
 
-object MetadataUtils {
+private[sxgboost] object MetadataUtils {
   /**
    * Examine a schema to identify categorical (Binary and Nominal) features.
    *

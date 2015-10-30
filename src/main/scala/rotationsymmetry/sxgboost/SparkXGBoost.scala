@@ -13,96 +13,96 @@ import scala.util.Random
 
 
 class SparkXGBoost(val loss: Loss) {
-  var numTrees : Int = 1
+  private var numTrees : Int = 1
   def setNumTrees(value: Int): this.type = {
     require(value >= 1)
     this.numTrees = value
     this
   }
 
-  var lambda: Double = 0.0
+  private var lambda: Double = 0.0
   def setLambda(value: Double): this.type = {
     require(value >= 0.0)
     this.lambda = value
     this
   }
 
-  var alpha: Double = 0.0
+  private var alpha: Double = 0.0
   def setAlpha(value: Double): this.type = {
     require(value >= 0.0)
     this.alpha = value
     this
   }
 
-  var gamma: Double = 0.0
+  private var gamma: Double = 0.0
   def setGamma(value: Double): this.type = {
     require(value >= 0.0)
     this.gamma = value
     this
   }
 
-  var eta: Double = 1.0
+  private var eta: Double = 1.0
   def setEta(value: Double): this.type = {
     require(value > 0 && value <= 1.0)
     this.eta = value
     this
   }
 
-  var labelCol: String ="label"
+  private var labelCol: String ="label"
   def setLabelCol(value: String): this.type = {
     this.labelCol = value
     this
   }
 
-  var featuresCol: String ="features"
+  private var featuresCol: String ="features"
   def setFeaturesCol(value: String): this.type = {
     this.featuresCol = value
     this
   }
 
-  var maxBins: Int = 32
+  private var maxBins: Int = 32
   def setMaxBins(value: Int): this.type = {
     require(value >= 2)
     this.maxBins = value
     this
   }
 
-  var maxDepth: Int = 5
+  private var maxDepth: Int = 5
   def setMaxDepth(value: Int): this.type = {
     require(value >= 1)
     this.maxDepth = value
     this
   }
 
-  var minWeight: Double = 1.0
+  private var minWeight: Double = 1.0
   def setMinWeight(value: Double): this.type = {
     require(value >= 1.0)
     this.minWeight = value
     this
   }
 
-  var featureSampleRatio: Double = 1.0
+  private var featureSampleRatio: Double = 1.0
   def setFeatureSampleRatio(value: Double): this.type = {
     require(value > 0 && value <= 1.0)
     this.featureSampleRatio = value
     this
   }
-  
-  var sampleRatio: Double = 1.0
+
+  private var sampleRatio: Double = 1.0
   def setSampleRatio(value: Double): this.type = {
     require(value > 0 && value <= 1.0)
     this.sampleRatio = value
     this
   }
 
-  var maxConcurrentNodes: Int = 50
+  private var maxConcurrentNodes: Int = 50
   def setMaxConcurrentNodes(value: Int): this.type = {
     require(value >= 1)
     this.maxConcurrentNodes = value
     this
   }
 
-  var seed: Long = new Random().nextLong()
+  private var seed: Long = new Random().nextLong()
   def setSeed(value: Long): this.type = {
     this.seed = value
     this

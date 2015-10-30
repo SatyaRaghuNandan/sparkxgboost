@@ -3,9 +3,9 @@ package rotationsymmetry.sxgboost
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
-case class TreePoint(label: Double, binnedFeature: Array[Int])
+private[sxgboost] case class TreePoint(label: Double, binnedFeature: Array[Int])
 
-object TreePoint {
+private[sxgboost] object TreePoint {
   def convertToTreeRDD(
       input: RDD[LabeledPoint],
       splitsBundle: Array[Array[Split]]): RDD[TreePoint] = {

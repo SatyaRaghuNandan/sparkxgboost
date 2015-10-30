@@ -5,8 +5,8 @@ of arbitrary user-defined loss function. SparkXGBoost is inspired by the [XGBoos
 
 `SparkXGBoost` is distributed under Apache License 2.0. 
 
-[![Build Status](https://travis-ci.org/rotationsymmetry/SparkXGBoost.svg?branch=master)](https://travis-ci.org/rotationsymmetry/SparkXGBoost) 
-[![codecov.io](https://codecov.io/github/rotationsymmetry/SparkXGBoost/coverage.svg?branch=master)](https://codecov.io/github/rotationsymmetry/SparkXGBoost?branch=master)
+[![Build Status](https://travis-ci.org/rotationsymmetry/sparkxgboost.svg?branch=master)](https://travis-ci.org/rotationsymmetry/sparkxgboost)
+[![codecov.io](https://codecov.io/github/rotationsymmetry/sparkxgboost/coverage.svg?branch=master)](https://codecov.io/github/rotationsymmetry/sparkxgboost?branch=master)
 
 ## What is Gradient Boosting Tree?
 The XGBoost team have a fantastic [introduction](http://xgboost.readthedocs.org/en/latest/model.html) to gradient boosting trees. 
@@ -20,6 +20,7 @@ SparkXGBoost version supports supervised learning with the gradient boosting tre
 
 To avoid overfitting, SparkXGBoost employs the following regularization methods: 
 
+* Shrinkage by learning rate (aka step size)
 * L2 regularization term on node
 * L1 regularization term on node
 * Stochastic gradient boosting (similar to Bagging)
@@ -82,14 +83,14 @@ cd SparkXGBoost
 sbt package clean package
 ```
 
-You should be able to find the jar file in `target/target/scala-2.10/sparkxgboost_2.10-0.2.jar`
+You should be able to find the jar file in `target/target/scala-2.10/sparkxgboost_2.10-x.y.z.jar`
 
 Lastly, load it in your Spark project
 
 * If you are using spark-shell, you can type in
 
 ``` bash
-./spark-shell --jars path/to/sparkxgboost_2.10-0.2.jar
+./spark-shell --jars path/to/sparkxgboost_2.10-x.y.z.jar
 ```
 
 * If you are building Spark application with sbt, you can put the jar file into the `lib` folder next to `src`. Then sbt should be able to put SparkXGBoost in your class path.
@@ -145,7 +146,7 @@ The following parameters can be specified by the setters in `SXGBoost` .
 	* minimum loss reduction required to make a further partition on a leaf node of the tree. 
 	* Double, range: [0, ∞]
 * eta [default=1.0]
-    * learning rate, or step size for gradient boosting. 
+    * learning rate (aka step size) for gradient boosting. 
     * Double, range: (0, 1]
 * minInstanceWeight [default=1]
 	* minimum weight (aka, number of data instance) required to make a further partition on a leaf node of the tree. 

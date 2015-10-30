@@ -1,12 +1,12 @@
 package rotationsymmetry.sxgboost
 
-case class WorkingSplit(featureIndex: Int, threshold: Int) extends Serializable {
+private[sxgboost] case class WorkingSplit(featureIndex: Int, threshold: Int) extends Serializable {
   def shouldGoLeft(binnedFeatures: Array[Int]): Boolean = {
     binnedFeatures(featureIndex) <= threshold
   }
 }
 
-case class SplitInfo(
+private[sxgboost] case class SplitInfo(
      split: WorkingSplit,
      gain: Double,
      leftPrediction: Double,

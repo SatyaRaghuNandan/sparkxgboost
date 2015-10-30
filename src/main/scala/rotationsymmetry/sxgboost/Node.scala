@@ -2,12 +2,12 @@ package rotationsymmetry.sxgboost
 
 import org.apache.spark.mllib.linalg.Vector
 
-abstract class Node extends Serializable {
+private[sxgboost] abstract class Node extends Serializable {
 
   def predict(features: Vector): Double
 }
 
-class InnerNode(val split: Split, val leftChild: Node, val rightChild: Node) extends Node {
+private[sxgboost] class InnerNode(val split: Split, val leftChild: Node, val rightChild: Node) extends Node {
 
   override def predict(features: Vector): Double = {
     if (split.shouldGoLeft(features)) {
@@ -18,7 +18,7 @@ class InnerNode(val split: Split, val leftChild: Node, val rightChild: Node) ext
   }
 }
 
-class LeafNode(val prediction: Double) extends Node {
+private[sxgboost] class LeafNode(val prediction: Double) extends Node {
 
   override def predict(features: Vector): Double = prediction
 }

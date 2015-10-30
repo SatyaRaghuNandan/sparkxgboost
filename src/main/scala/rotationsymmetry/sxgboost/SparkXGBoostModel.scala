@@ -7,12 +7,12 @@ import rotationsymmetry.sxgboost.loss.Loss
 
 class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss) extends Serializable{
 
-  var featuresCol: String = "features"
+  private var featuresCol: String = "features"
   def setFeaturesCol(value: String): this.type = {
     this.featuresCol = value
     this
   }
-  var predictionCol: String = "prediction"
+  private var predictionCol: String = "prediction"
   def setPredictionCol(value: String): this.type = {
     this.predictionCol = value
     this
@@ -26,6 +26,7 @@ class SparkXGBoostModel(val bias: Double, val trees: List[Node], val loss: Loss)
     }
     loss.toPrediction(score)
   }
+
   def transform(dataset: DataFrame): DataFrame = {
     //SchemaUtils.checkColumnType(dataset.schema, featuresCol, new VectorUDT)
 

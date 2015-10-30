@@ -1,6 +1,6 @@
 name := "SparkXGBoost"
 
-spName := "rotationsymmetry/SparkXGBoost"
+spName := "rotationsymmetry/sparkxgboost"
 
 organization := "rotationsymmetry"
 

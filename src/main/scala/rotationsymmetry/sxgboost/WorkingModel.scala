@@ -2,7 +2,7 @@ package rotationsymmetry.sxgboost
 
 import rotationsymmetry.sxgboost.loss.Loss
 
-class WorkingModel(bias: Double, var trees: Array[WorkingNode]) extends Serializable {
+private[sxgboost] class WorkingModel(bias: Double, var trees: Array[WorkingNode]) extends Serializable {
   def predict(treePoint: TreePoint): Double = {
     if (trees.nonEmpty){
       bias + trees.map{ root =>  root.predict(treePoint) }.sum
