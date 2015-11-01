@@ -14,7 +14,7 @@ class PoissonLossSuite extends FunSuite with MLlibTestSparkContext with NumericD
    * does not contribute to the diff's.
   */
   def numericLoss(label: Double, f: Double): Double = {
-    label * Math.log(f) -f
+    - label * Math.log(f) + f
   }
 
   test("diff's match numerical counterparts") {

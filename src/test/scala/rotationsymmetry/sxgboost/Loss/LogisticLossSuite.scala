@@ -10,7 +10,7 @@ class LogisticLossSuite extends FunSuite with MLlibTestSparkContext with Numeric
   val loss = new LogisticLoss()
 
   def numericLoss(label: Double, f: Double): Double = {
-    label * f - Math.log(1 + Math.exp(f))
+    - label * f + Math.log(1 + Math.exp(f))
   }
 
   test("diff's match numerical counterparts") {
