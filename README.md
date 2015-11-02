@@ -70,13 +70,23 @@ SparkXGBoost has been tested with Spark 1.5.1/1.4.1 and Scala 2.10.
 
 ## Use SparkXGBoost in Your Project
 
-Firstly, clone the project from GitHub
+### Option 1: spark-package.org
+Releases of SparkXGBoost are available on [spark-package.org](http://spark-packages.org/package/rotationsymmetry/sparkxgboost). 
+You can follow the "How to" for spark-shell, sbt or maven.
+
+As SparkXGBoost is currently under active development, 
+the spark-package.org release might not always include the latest update.
+
+### Option 2: Compile 
+You can access the latest cutting edge codebase through compilation from the source.
+
+Step 1: clone the project from GitHub
 
 ``` bash
-git clone https://github.com/rotationsymmetry/SparkXGBoost.git
+git clone https://github.com/rotationsymmetry/sparkxgboost.git
 ```
 
-Secondly, compile and package the jar using [sbt](http://www.scala-sbt.org)
+Step 2: compile and package the jar using [sbt](http://www.scala-sbt.org)
 
 ``` bash 
 cd SparkXGBoost
@@ -85,7 +95,7 @@ sbt package clean package
 
 You should be able to find the jar file in `target/target/scala-2.10/sparkxgboost_2.10-x.y.z.jar`
 
-Lastly, load it in your Spark project
+Step 3: load it in your Spark project
 
 * If you are using spark-shell, you can type in
 
