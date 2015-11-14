@@ -20,11 +20,7 @@ class LogisticLoss extends Loss {
   }
 
   override def toPrediction(score: Double): Double = {
-    if (score >= 0.5) {
-      1.0
-    } else {
-      0
-    }
+    1 / (1 + Math.exp(-score))
   }
 
   override def getInitialBias(input: RDD[LabeledPoint]): Double = {

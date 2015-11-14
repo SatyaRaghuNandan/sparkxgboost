@@ -1,16 +1,22 @@
 package rotationsymmetry.sxgboost
 
+import org.apache.spark.ml.param.ParamMap
 import org.scalatest.{BeforeAndAfter, FunSuite}
-import rotationsymmetry.sxgboost.loss.SquareLoss
-import rotationsymmetry.sxgboost.utils.TestingUtils
-import TestingUtils._
+import rotationsymmetry.sxgboost.utils.TestingUtils._
 
-class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
 
-  var sparkXGBoost: SparkXGBoost = null
+class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
+
+  class MockSparkXGBoost(override val uid: String)
+    extends SparkXGBoostParams with SparkXGBoostAlgorithm {
+
+    override def copy(extra: ParamMap): this.type = defaultCopy(extra)
+  }
+
+  var sparkXGBoost: MockSparkXGBoost = null
 
   before {
-    sparkXGBoost = new SparkXGBoost(new SquareLoss)
+    sparkXGBoost = new MockSparkXGBoost("test")
   }
 
   test("extractDiffsFromStatsView") {
@@ -33,7 +39,7 @@ class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
     val featureSampleRatio = 0.5
     val numSampledFeatures = (numFeatures * featureSampleRatio).toInt
     val numSamples = 20
-    val featureIndicesBundle = sparkXGBoost.sampleFeatureIndices(numFeatures, featureSampleRatio, numSamples)
+    val featureIndicesBundle = sparkXGBoost.sampleFeatureIndices(numFeatures, featureSampleRatio, numSamples, 1)
     assert(featureIndicesBundle.length == numSamples)
     featureIndicesBundle.foreach(indices => assert(indices.length == numSampledFeatures))
   }
@@ -150,4 +156,6 @@ class SparkXGBoostMethodsSuite extends FunSuite with BeforeAndAfter{
     assert(sparkXGBoost.getPartialObjAndEst(g = 3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
     assert(sparkXGBoost.getPartialObjAndEst(g = -3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
   }
+
+
 }

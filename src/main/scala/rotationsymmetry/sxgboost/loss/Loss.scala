@@ -9,9 +9,14 @@ abstract class Loss extends Serializable{
 
   def diff2(label: Double, f: Double): Double
 
+  /*
+  Classification: prediction is probability
+  Regression: prediction is label
+   */
   def toPrediction(score: Double): Double
 
   def getInitialBias(input: RDD[LabeledPoint]): Double
+
 }
 
 
