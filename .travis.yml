@@ -3,7 +3,6 @@ scala:
    - 2.10.6
 env:
    - TEST_SPARK_VERSION="1.5.1"
-   - TEST_SPARK_VERSION="1.4.1"
 before_install:
   - pip install --user codecov
 script:

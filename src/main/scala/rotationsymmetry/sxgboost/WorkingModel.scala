@@ -1,8 +1,6 @@
 package rotationsymmetry.sxgboost
 
-import rotationsymmetry.sxgboost.loss.Loss
-
-private[sxgboost] class WorkingModel(bias: Double, var trees: Array[WorkingNode]) extends Serializable {
+private[sxgboost] class WorkingModel(val bias: Double, var trees: Array[WorkingNode]) extends Serializable {
   def predict(treePoint: TreePoint): Double = {
     if (trees.nonEmpty){
       bias + trees.map{ root =>  root.predict(treePoint) }.sum
@@ -11,8 +9,12 @@ private[sxgboost] class WorkingModel(bias: Double, var trees: Array[WorkingNode]
     }
   }
 
-  def toSparkXGBoostModel(splitsBundle: Array[Array[Split]], loss: Loss): SparkXGBoostModel = {
-    val immutableTrees = trees.map(workingNode => workingNode.toNode(splitsBundle)).toList
-    new SparkXGBoostModel(bias, immutableTrees, loss)
+  def getImmutableTrees(splitsBundle: Array[Array[Split]]): List[Node] = {
+    trees.map(workingNode => workingNode.toNode(splitsBundle)).toList
+  }
+
+  def toTrainedModel(splitsBundle: Array[Array[Split]]): TrainedModel = {
+    val immutableTrees = getImmutableTrees(splitsBundle)
+    TrainedModel(bias, immutableTrees)
   }
 }

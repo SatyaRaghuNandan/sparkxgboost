@@ -38,9 +38,8 @@ class LogisticLossSuite extends FunSuite with MLlibTestSparkContext with Numeric
   }
 
   test("prediction from score"){
-    assert(loss.toPrediction(0.0) === 0.0)
-    assert(loss.toPrediction(1.0) === 1.0)
-    assert(loss.toPrediction(0.49) === 0.0)
-    assert(loss.toPrediction(0.50) === 1.0)
+    assert(loss.toPrediction(0.0) ~== 0.5 relTol 1e-5)
+    assert(loss.toPrediction(1.0) ~== 0.7310586 relTol 1e-5)
+    assert(loss.toPrediction(-1.0) ~== 0.2689414 relTol 1e-5)
   }
 }

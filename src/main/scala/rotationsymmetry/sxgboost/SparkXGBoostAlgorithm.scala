@@ -1,128 +1,19 @@
 package rotationsymmetry.sxgboost
 
-import org.apache.spark.mllib.linalg.{Vector}
+import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
-import org.apache.spark.sql.types.DoubleType
-import org.apache.spark.sql.{DataFrame, Row}
-import org.apache.spark.storage.StorageLevel
 import rotationsymmetry.sxgboost.loss.Loss
 
 import scala.collection.mutable
 import scala.util.Random
 
+trait SparkXGBoostAlgorithm {
+  self: SparkXGBoostParams =>
 
-class SparkXGBoost(val loss: Loss) {
-  private var numTrees : Int = 1
-  def setNumTrees(value: Int): this.type = {
-    require(value >= 1)
-    this.numTrees = value
-    this
-  }
+  def trainModel(input: RDD[LabeledPoint], loss: Loss, categoricalFeatures: Map[Int, Int]): TrainedModel = {
 
-  private var lambda: Double = 0.0
-  def setLambda(value: Double): this.type = {
-    require(value >= 0.0)
-    this.lambda = value
-    this
-  }
-
-  private var alpha: Double = 0.0
-  def setAlpha(value: Double): this.type = {
-    require(value >= 0.0)
-    this.alpha = value
-    this
-  }
-
-  private var gamma: Double = 0.0
-  def setGamma(value: Double): this.type = {
-    require(value >= 0.0)
-    this.gamma = value
-    this
-  }
-
-  private var eta: Double = 1.0
-  def setEta(value: Double): this.type = {
-    require(value > 0 && value <= 1.0)
-    this.eta = value
-    this
-  }
-
-  private var labelCol: String ="label"
-  def setLabelCol(value: String): this.type = {
-    this.labelCol = value
-    this
-  }
-
-  private var featuresCol: String ="features"
-  def setFeaturesCol(value: String): this.type = {
-    this.featuresCol = value
-    this
-  }
-
-  private var maxBins: Int = 32
-  def setMaxBins(value: Int): this.type = {
-    require(value >= 2)
-    this.maxBins = value
-    this
-  }
-
-  private var maxDepth: Int = 5
-  def setMaxDepth(value: Int): this.type = {
-    require(value >= 1)
-    this.maxDepth = value
-    this
-  }
-
-  private var minWeight: Double = 1.0
-  def setMinWeight(value: Double): this.type = {
-    require(value >= 1.0)
-    this.minWeight = value
-    this
-  }
-
-  private var featureSampleRatio: Double = 1.0
-  def setFeatureSampleRatio(value: Double): this.type = {
-    require(value > 0 && value <= 1.0)
-    this.featureSampleRatio = value
-    this
-  }
-
-  private var sampleRatio: Double = 1.0
-  def setSampleRatio(value: Double): this.type = {
-    require(value > 0 && value <= 1.0)
-    this.sampleRatio = value
-    this
-  }
-
-  private var maxConcurrentNodes: Int = 50
-  def setMaxConcurrentNodes(value: Int): this.type = {
-    require(value >= 1)
-    this.maxConcurrentNodes = value
-    this
-  }
-
-  private var seed: Long = new Random().nextLong()
-  def setSeed(value: Long): this.type = {
-    this.seed = value
-    this
-  }
-
-  def fit(dataset: DataFrame): SparkXGBoostModel = {
-
-    // Check dataset schema
-    //SchemaUtils.checkColumnType(dataset.schema, featuresCol, new VectorUDT)
-    SchemaUtils.checkColumnType(dataset.schema, labelCol, DoubleType)
-
-    val categoricalFeatures: Map[Int, Int] =
-      MetadataUtils.getCategoricalFeatures(dataset.schema(featuresCol))
-
-    val input: RDD[LabeledPoint] = dataset.select(labelCol, featuresCol).map {
-      case Row(label: Double, features: Vector) => LabeledPoint(label, features)
-    }
-    input.persist(StorageLevel.MEMORY_AND_DISK)
-
-    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, maxBins, seed)
+    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), $(seed))
 
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
@@ -131,7 +22,7 @@ class SparkXGBoost(val loss: Loss) {
     val workingModel = new WorkingModel(bias, Array())
 
     var treeIdx: Int = 0
-    while (treeIdx < numTrees){
+    while (treeIdx < $(numTrees)){
 
       val currentRoot = new WorkingNode(0)
       val nodeQueue: mutable.Queue[WorkingNode] = new mutable.Queue[WorkingNode]()
@@ -139,9 +30,9 @@ class SparkXGBoost(val loss: Loss) {
 
       while (nodeQueue.nonEmpty){
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
-        val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, featureSampleRatio, nodeBatch.length)
+        val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, $(featureSampleRatio), nodeBatch.length, $(seed))
 
-        val sampledTreePoints = treePoints.sample(false, sampleRatio, seed)
+        val sampledTreePoints = treePoints.sample(false, $(sampleRatio), $(seed))
         // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
@@ -152,7 +43,7 @@ class SparkXGBoost(val loss: Loss) {
           nodeBatch(nodeIdx).idxInBatch = None
 
           val bestSplit = findBestSplit(lossAggregator.stats(nodeIdx),
-            lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), lambda, alpha, gamma)
+            lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), $(lambda), $(alpha), $(gamma))
 
           bestSplit match {
             case Some(splitInfo) => {
@@ -160,17 +51,17 @@ class SparkXGBoost(val loss: Loss) {
               node.split = Some(splitInfo.split)
 
               val leftChild = new WorkingNode(node.depth + 1)
-              leftChild.prediction = Some(splitInfo.leftPrediction * eta)
+              leftChild.prediction = Some(splitInfo.leftPrediction * $(eta))
               leftChild.weight = Some(splitInfo.leftWeight)
               node.leftChild = Some(leftChild)
 
               val rightChild = new WorkingNode(node.depth + 1)
-              rightChild.prediction = Some(splitInfo.rightPrediction * eta)
+              rightChild.prediction = Some(splitInfo.rightPrediction * $(eta))
               rightChild.weight = Some(splitInfo.rightWeight)
               node.rightChild = Some(rightChild)
 
               Iterator(leftChild, rightChild)
-                .filter(workingNode => workingNode.depth < maxDepth && workingNode.weight.get >= minWeight)
+                .filter(workingNode => workingNode.depth < $(maxDepth) && workingNode.weight.get >= $(minInstanceWeight))
             }
             case None => Iterator()
           }
@@ -182,20 +73,18 @@ class SparkXGBoost(val loss: Loss) {
         workingModel.trees = workingModel.trees :+ currentRoot
         treeIdx += 1
       } else {
-        treeIdx = numTrees // breaking the loop
+        treeIdx = $(numTrees) // breaking the loop
       }
     }
 
-    input.unpersist()
-
-    workingModel.toSparkXGBoostModel(splits, loss).setFeaturesCol(featuresCol)
+    workingModel.toTrainedModel(splits)
   }
 
   private def dequeueWithinMemLimit(queue: mutable.Queue[WorkingNode]): Array[WorkingNode] = {
     val arrayBuilder = mutable.ArrayBuilder.make[WorkingNode]()
 
     var idx: Int = 0
-    while (queue.nonEmpty && idx < maxConcurrentNodes){
+    while (queue.nonEmpty && idx < $(maxConcurrentNodes)){
       val node = queue.dequeue()
       node.idxInBatch = Some(idx)
       arrayBuilder += node
@@ -220,10 +109,10 @@ class SparkXGBoost(val loss: Loss) {
   }
 
   private[sxgboost] def findBestSplitForSingleFeature(
-   statsView: Seq[Double],
-   featureIdx: Int,
-   lambda: Double,
-   alpha: Double) = {
+                                                       statsView: Seq[Double],
+                                                       featureIdx: Int,
+                                                       lambda: Double,
+                                                       alpha: Double) = {
     val (d1, d2, weights) = extractDiffsAndWeightsFromStatsView(statsView)
     val (d1CuSum, d1Total) = getCuSumAndTotal(d1)
     val (d2CuSum, d2Total) = getCuSumAndTotal(d2)
@@ -256,19 +145,19 @@ class SparkXGBoost(val loss: Loss) {
   }
 
   private[sxgboost] def findBestSplit(
-       stats: Array[Double],
-       featureIndices: Array[Int],
-       offsets: Array[Int],
-       lambda: Double,
-       alpha: Double,
-       gamma: Double): Option[SplitInfo] = {
+                                       stats: Array[Double],
+                                       featureIndices: Array[Int],
+                                       offsets: Array[Int],
+                                       lambda: Double,
+                                       alpha: Double,
+                                       gamma: Double): Option[SplitInfo] = {
     val statsViews = createStatsViews(stats, featureIndices, offsets)
 
     val candidateSplit = (statsViews zip featureIndices) map { case (statsView, featureIdx)=>
-        findBestSplitForSingleFeature(statsView, featureIdx, lambda, alpha)
+      findBestSplitForSingleFeature(statsView, featureIdx, lambda, alpha)
     }
 
-    val eligibleSplit = candidateSplit.filter(_.gain > gamma)
+    val eligibleSplit = candidateSplit.filter(_.gain >= gamma)
 
     if (eligibleSplit.nonEmpty){
       Some(eligibleSplit.maxBy(_.gain))
@@ -283,10 +172,10 @@ class SparkXGBoost(val loss: Loss) {
   }
 
 
-  private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int): Array[Array[Int]] = {
+  private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int, seed: Long): Array[Array[Int]] = {
     val numSampledFeatures = Math.ceil(numFeatures * featureSampleRatio).toInt
     val indices = Range(0, numFeatures).toBuffer
-    val rnd = new Random()
+    val rnd = new Random(seed)
     val arrayBuilder = mutable.ArrayBuilder.make[Array[Int]]()
     Range(0, numSamples).foreach { i =>
       arrayBuilder += rnd.shuffle(indices).take(numSampledFeatures).toArray
@@ -324,4 +213,19 @@ class SparkXGBoost(val loss: Loss) {
     g * est + 0.5 * (h + lambda) * Math.pow(est, 2.0) + alpha * Math.abs(est)
   }
 
+
+}
+
+
+case class TrainedModel(bias: Double, trees: List[Node])
+
+trait SparkXGBoostModelPredictor {
+  def getModelPrediction(features: Vector, bias: Double, trees: List[Node], loss: Loss): Double = {
+    val score = if (trees.nonEmpty){
+      bias + trees.map{ node => node.predict(features) }.sum
+    } else {
+      bias
+    }
+    loss.toPrediction(score)
+  }
 }
