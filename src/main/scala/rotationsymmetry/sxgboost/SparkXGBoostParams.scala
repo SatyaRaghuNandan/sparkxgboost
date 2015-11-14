@@ -37,7 +37,7 @@ trait SparkXGBoostParams extends Params {
   setDefault(sampleRatio -> 1.0)
 
   final val featureSampleRatio: DoubleParam = new DoubleParam(this, "featureSampleRatio",
-    "subsample ratio of columns when constructing each tree")
+    "sample ratio of columns when constructing each tree")
   setDefault(featureSampleRatio -> 1.0)
 
   final val maxConcurrentNodes: IntParam = new IntParam(this, "maxConcurrentNodes",
