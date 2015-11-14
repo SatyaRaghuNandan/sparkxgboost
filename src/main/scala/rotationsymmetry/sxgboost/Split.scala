@@ -36,7 +36,7 @@ private[sxgboost] object OrderedSplit {
        input: RDD[LabeledPoint],
        categoricalFeatures: Map[Int, Int],
        maxBins: Int,
-       seed: Long = new Random().nextLong()): Array[Array[Split]] = {
+       seed: Long): Array[Array[Split]] = {
 
     val requiredSamples = math.max(maxBins * maxBins, 10000)
     val numSamples = input.count()
