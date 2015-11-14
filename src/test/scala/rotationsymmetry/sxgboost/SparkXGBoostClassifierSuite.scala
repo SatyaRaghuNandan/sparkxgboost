@@ -12,7 +12,7 @@ import rotationsymmetry.sxgboost.utils.MLlibTestSparkContext
 
 class SparkXGBoostClassifierSuite extends FunSuite with TestData with MLlibTestSparkContext {
 
-  test("jj") {
+  test("test with simple data") {
     val rawdata = Seq(
       LabeledPoint(0, Vectors.dense(0.0, 0.0)),
       LabeledPoint(0, Vectors.dense(0.0, 0.0)),

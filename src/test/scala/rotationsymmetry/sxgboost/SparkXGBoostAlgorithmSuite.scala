@@ -4,6 +4,8 @@ import org.apache.spark.ml.param.ParamMap
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import rotationsymmetry.sxgboost.utils.TestingUtils._
 
+import scala.util.Random
+
 
 class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
 
@@ -39,7 +41,7 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     val featureSampleRatio = 0.5
     val numSampledFeatures = (numFeatures * featureSampleRatio).toInt
     val numSamples = 20
-    val featureIndicesBundle = sparkXGBoost.sampleFeatureIndices(numFeatures, featureSampleRatio, numSamples, 1)
+    val featureIndicesBundle = sparkXGBoost.sampleFeatureIndices(numFeatures, featureSampleRatio, numSamples, new Random)
     assert(featureIndicesBundle.length == numSamples)
     featureIndicesBundle.foreach(indices => assert(indices.length == numSampledFeatures))
   }

@@ -13,7 +13,9 @@ trait SparkXGBoostAlgorithm {
 
   def trainModel(input: RDD[LabeledPoint], loss: Loss, categoricalFeatures: Map[Int, Int]): TrainedModel = {
 
-    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), $(seed))
+    val rng = new Random($(seed))
+
+    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), rng.nextLong)
 
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
@@ -30,9 +32,9 @@ trait SparkXGBoostAlgorithm {
 
       while (nodeQueue.nonEmpty){
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
-        val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, $(featureSampleRatio), nodeBatch.length, $(seed))
+        val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, $(featureSampleRatio), nodeBatch.length, rng)
 
-        val sampledTreePoints = treePoints.sample(false, $(sampleRatio), $(seed))
+        val sampledTreePoints = treePoints.sample(false, $(sampleRatio), rng.nextLong)
         // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
@@ -172,13 +174,12 @@ trait SparkXGBoostAlgorithm {
   }
 
 
-  private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int, seed: Long): Array[Array[Int]] = {
+  private[sxgboost] def sampleFeatureIndices(numFeatures: Int, featureSampleRatio: Double, numSamples: Int, rng: Random): Array[Array[Int]] = {
     val numSampledFeatures = Math.ceil(numFeatures * featureSampleRatio).toInt
     val indices = Range(0, numFeatures).toBuffer
-    val rnd = new Random(seed)
     val arrayBuilder = mutable.ArrayBuilder.make[Array[Int]]()
     Range(0, numSamples).foreach { i =>
-      arrayBuilder += rnd.shuffle(indices).take(numSampledFeatures).toArray
+      arrayBuilder += rng.shuffle(indices).take(numSampledFeatures).toArray
     }
     arrayBuilder.result()
   }
