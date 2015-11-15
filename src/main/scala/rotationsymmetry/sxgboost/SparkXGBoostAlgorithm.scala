@@ -15,7 +15,7 @@ trait SparkXGBoostAlgorithm {
 
     val rng = new Random($(seed))
 
-    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), rng.nextLong)
+    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), rng.nextLong())
 
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
@@ -34,7 +34,7 @@ trait SparkXGBoostAlgorithm {
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
         val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, $(featureSampleRatio), nodeBatch.length, rng)
 
-        val sampledTreePoints = treePoints.sample(false, $(sampleRatio), rng.nextLong)
+        val sampledTreePoints = treePoints.sample(withReplacement = false, $(sampleRatio), rng.nextLong())
         // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
@@ -42,40 +42,46 @@ trait SparkXGBoostAlgorithm {
           combOp = (agg1, agg2) => agg1.merge(agg2))
 
         val nodesToEnqueue = nodeBatch.indices.flatMap { nodeIdx =>
-          nodeBatch(nodeIdx).idxInBatch = None
+          val node = nodeBatch(nodeIdx)
+          node.idxInBatch = None
 
-          val bestSplit = findBestSplit(lossAggregator.stats(nodeIdx),
-            lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), $(lambda), $(alpha), $(gamma))
+          val bestSplitInfo = findBestSplit(lossAggregator.stats(nodeIdx),
+            lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), $(lambda), $(alpha))
 
-          bestSplit match {
-            case Some(splitInfo) => {
-              val node = nodeBatch(nodeIdx)
-              node.split = Some(splitInfo.split)
+          node.split = Some(bestSplitInfo.split)
+          node.gain = Some(bestSplitInfo.gain)
 
-              val leftChild = new WorkingNode(node.depth + 1)
-              leftChild.prediction = Some(splitInfo.leftPrediction * $(eta))
-              leftChild.weight = Some(splitInfo.leftWeight)
-              node.leftChild = Some(leftChild)
+          val leftChild = new WorkingNode(node.depth + 1)
+          leftChild.prediction = Some(bestSplitInfo.leftPrediction * $(eta))
+          leftChild.weight = Some(bestSplitInfo.leftWeight)
+          node.leftChild = Some(leftChild)
 
-              val rightChild = new WorkingNode(node.depth + 1)
-              rightChild.prediction = Some(splitInfo.rightPrediction * $(eta))
-              rightChild.weight = Some(splitInfo.rightWeight)
-              node.rightChild = Some(rightChild)
+          val rightChild = new WorkingNode(node.depth + 1)
+          rightChild.prediction = Some(bestSplitInfo.rightPrediction * $(eta))
+          rightChild.weight = Some(bestSplitInfo.rightWeight)
+          node.rightChild = Some(rightChild)
 
-              Iterator(leftChild, rightChild)
-                .filter(workingNode => workingNode.depth < $(maxDepth) && workingNode.weight.get >= $(minInstanceWeight))
+          Iterator(leftChild, rightChild).filter {workingNode =>
+              workingNode.depth < $(maxDepth) && workingNode.weight.get >= $(minInstanceWeight)
             }
-            case None => Iterator()
-          }
         }
         nodeQueue ++= nodesToEnqueue
       }
+
+      prune(currentRoot, $(gamma))
 
       if (!currentRoot.isLeaf) {
         workingModel.trees = workingModel.trees :+ currentRoot
         treeIdx += 1
       } else {
-        treeIdx = $(numTrees) // breaking the loop
+        /*
+          If there is no sampling in records or features,
+          then the next iteration will still be an empty tree.
+          So skip to the end of the while loop.
+         */
+        if ($(sampleRatio) == 1.0 && $(featureSampleRatio) == 1.0) {
+          treeIdx = $(numTrees)
+        }
       }
     }
 
@@ -111,10 +117,10 @@ trait SparkXGBoostAlgorithm {
   }
 
   private[sxgboost] def findBestSplitForSingleFeature(
-                                                       statsView: Seq[Double],
-                                                       featureIdx: Int,
-                                                       lambda: Double,
-                                                       alpha: Double) = {
+      statsView: Seq[Double],
+      featureIdx: Int,
+      lambda: Double,
+      alpha: Double) = {
     val (d1, d2, weights) = extractDiffsAndWeightsFromStatsView(statsView)
     val (d1CuSum, d1Total) = getCuSumAndTotal(d1)
     val (d2CuSum, d2Total) = getCuSumAndTotal(d2)
@@ -147,25 +153,18 @@ trait SparkXGBoostAlgorithm {
   }
 
   private[sxgboost] def findBestSplit(
-                                       stats: Array[Double],
-                                       featureIndices: Array[Int],
-                                       offsets: Array[Int],
-                                       lambda: Double,
-                                       alpha: Double,
-                                       gamma: Double): Option[SplitInfo] = {
+      stats: Array[Double],
+      featureIndices: Array[Int],
+      offsets: Array[Int],
+      lambda: Double,
+      alpha: Double): SplitInfo = {
     val statsViews = createStatsViews(stats, featureIndices, offsets)
 
     val candidateSplit = (statsViews zip featureIndices) map { case (statsView, featureIdx)=>
       findBestSplitForSingleFeature(statsView, featureIdx, lambda, alpha)
     }
 
-    val eligibleSplit = candidateSplit.filter(_.gain >= gamma)
-
-    if (eligibleSplit.nonEmpty){
-      Some(eligibleSplit.maxBy(_.gain))
-    } else {
-      None
-    }
+    candidateSplit.maxBy(_.gain)
   }
 
   private[sxgboost] def getCuSumAndTotal(ds: Seq[Double]) = {
@@ -214,7 +213,18 @@ trait SparkXGBoostAlgorithm {
     g * est + 0.5 * (h + lambda) * Math.pow(est, 2.0) + alpha * Math.abs(est)
   }
 
+  private[sxgboost] def prune(workingNode: WorkingNode, gamma: Double): Unit = {
+    if (! workingNode.isLeaf) {
+      prune(workingNode.leftChild.get, gamma)
+      prune(workingNode.rightChild.get, gamma)
 
+      if (workingNode.leftChild.get.isLeaf &&
+        workingNode.rightChild.get.isLeaf &&
+        workingNode.gain.get <= gamma) {
+        workingNode.collapse()
+      }
+    }
+  }
 }
 
 

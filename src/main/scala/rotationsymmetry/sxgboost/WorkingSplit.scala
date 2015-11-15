@@ -7,9 +7,9 @@ private[sxgboost] case class WorkingSplit(featureIndex: Int, threshold: Int) ext
 }
 
 private[sxgboost] case class SplitInfo(
-     split: WorkingSplit,
-     gain: Double,
-     leftPrediction: Double,
-     rightPrediction: Double,
-     leftWeight: Double,
-     rightWeight: Double)
+    split: WorkingSplit,
+    gain: Double,
+    leftPrediction: Double,
+    rightPrediction: Double,
+    leftWeight: Double,
+    rightWeight: Double)

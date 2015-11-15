@@ -72,7 +72,7 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     assert(optimSplit.rightWeight ~== 2.0 relTol 1e-5)
   }
 
-  test("findBestSplit with small gamma"){
+  test("findBestSplit"){
     /*
     See Scenario 1 and 2 of
     https://docs.google.com/spreadsheets/d/1rPOorXThwn3XLnCRFImExSmlTSr4evBDAdY4oXMtf3A/edit?usp=sharing
@@ -96,42 +96,11 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     val featureIndices = Array[Int](0, 1)
     val lambda = 0.5
     val alpha = 0.0
-    val gamma = -10.0
 
-    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha, gamma)
-    assert(optimSplit.get.split.featureIndex == 1)
-    assert(optimSplit.get.split.threshold == 0)
+    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha)
+    assert(optimSplit.split.featureIndex == 1)
+    assert(optimSplit.split.threshold == 0)
 
-  }
-
-  test("findBestSplit with big gamma"){
-    /*
-    See Scenario 1 and 2 of
-    https://docs.google.com/spreadsheets/d/1rPOorXThwn3XLnCRFImExSmlTSr4evBDAdY4oXMtf3A/edit?usp=sharing
-    for the worksheet to derive the results.
-    */
-    val stats: Array[Double] = Array(
-      1.0, 2.0, 1.0,
-      1.5, 0.2, 1.0,
-      0.1, 0.0, 1.0,
-      3.0, 10,  1.0,
-      1.5, 9.0, 1.0,
-
-      1.5, 20.0,1.0,
-      3.5, 0.2, 1.0,
-      1.3, 2.0, 1.0,
-      0.1, 0.0, 1.0,
-      3.0, 10.0,1.0,
-      1.5, 9.0, 1.0
-    )
-    val offsets = Array[Int](0, 15)
-    val featureIndices = Array[Int](0, 1)
-    val lambda = 0.5
-    val alpha = 0.0
-    val gamma = 10.0
-
-    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha, gamma)
-    assert(optimSplit.isEmpty)
   }
 
   test("L1 loss") {
@@ -159,5 +128,48 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     assert(sparkXGBoost.getPartialObjAndEst(g = -3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
   }
 
+  def createMockTreeForPruning: WorkingNode = {
+    val root = new WorkingNode(0)
+    root.split = Some(new WorkingSplit(1, 1))
+    root.leftChild = Some(new WorkingNode(1))
+    root.rightChild = Some(new WorkingNode(1))
 
+    val leftChild = root.leftChild.get
+    leftChild.split = Some(new WorkingSplit(1, 1))
+    leftChild.leftChild = Some(new WorkingNode(2))
+    leftChild.rightChild = Some(new WorkingNode(2))
+
+    root
+  }
+
+  test("post-pruning: large gamma => pruning"){
+    val root = createMockTreeForPruning
+    root.gain = Some(3.0)
+    root.leftChild.get.gain = Some(1.0)
+    sparkXGBoost.prune(root, 2.0)
+    assert(root.leftChild.get.isLeaf)
+  }
+
+  test("post-pruning: small gamma => no pruning"){
+    val root = createMockTreeForPruning
+    root.gain = Some(3.0)
+    root.leftChild.get.gain = Some(1.0)
+    sparkXGBoost.prune(root, 0.5)
+    assert(! root.leftChild.get.isLeaf)
+  }
+
+  test("post-pruning: large gamma but children are non leaves => no pruning"){
+    val root = createMockTreeForPruning
+    val leftLeftChild = root.leftChild.get.leftChild.get
+    leftLeftChild.split = Some(new WorkingSplit(1, 1))
+    leftLeftChild.leftChild = Some(new WorkingNode(3))
+    leftLeftChild.rightChild = Some(new WorkingNode(3))
+
+    root.gain = Some(3.0)
+    root.leftChild.get.gain = Some(1.0)
+    root.leftChild.get.leftChild.get.gain = Some(1.2)
+
+    sparkXGBoost.prune(root, 1.1)
+    assert(! root.leftChild.get.isLeaf)
+  }
 }
