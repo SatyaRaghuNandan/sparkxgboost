@@ -1,5 +1,6 @@
 package rotationsymmetry.sxgboost
 
+import org.apache.spark.Logging
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -9,7 +10,7 @@ import scala.collection.mutable
 import scala.util.Random
 
 trait SparkXGBoostAlgorithm {
-  self: SparkXGBoostParams =>
+  self: SparkXGBoostParams with Logging =>
 
   def trainModel(input: RDD[LabeledPoint], loss: Loss, categoricalFeatures: Map[Int, Int]): TrainedModel = {
 
@@ -26,6 +27,8 @@ trait SparkXGBoostAlgorithm {
     var treeIdx: Int = 0
     while (treeIdx < $(numTrees)){
 
+      log.info("Tree # {}: begins", treeIdx)
+
       val currentRoot = new WorkingNode(0)
       val nodeQueue: mutable.Queue[WorkingNode] = new mutable.Queue[WorkingNode]()
       nodeQueue.enqueue(currentRoot)
@@ -35,11 +38,14 @@ trait SparkXGBoostAlgorithm {
         val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, $(featureSampleRatio), nodeBatch.length, rng)
 
         val sampledTreePoints = treePoints.sample(withReplacement = false, $(sampleRatio), rng.nextLong())
+
+        log.info("Tree # {}: stat aggregation begins", treeIdx)
         // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
           seqOp = (agg, treePoint) => agg.add(treePoint),
           combOp = (agg1, agg2) => agg1.merge(agg2))
+        log.info("Tree # {}: stat aggregation completes", treeIdx)
 
         val nodesToEnqueue = nodeBatch.indices.flatMap { nodeIdx =>
           val node = nodeBatch(nodeIdx)
@@ -70,16 +76,20 @@ trait SparkXGBoostAlgorithm {
 
       prune(currentRoot, $(gamma))
 
+      log.info("Tree # {}: completes", treeIdx)
+
       if (!currentRoot.isLeaf) {
         workingModel.trees = workingModel.trees :+ currentRoot
         treeIdx += 1
       } else {
+        log.info("tree # {} is empty => discarded", treeIdx)
         /*
           If there is no sampling in records or features,
           then the next iteration will still be an empty tree.
           So skip to the end of the while loop.
          */
         if ($(sampleRatio) == 1.0 && $(featureSampleRatio) == 1.0) {
+          log.info("reach stationary point with no sampling; skip to end")
           treeIdx = $(numTrees)
         }
       }
