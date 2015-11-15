@@ -15,7 +15,7 @@ trait SparkXGBoostAlgorithm {
 
     val rng = new Random($(seed))
 
-    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), rng.nextLong)
+    val splits = OrderedSplit.createOrderedSplits(input, categoricalFeatures, $(maxBins), rng.nextLong())
 
     val metaData = MetaData.getMetaData(input, splits)
     val treePoints = TreePoint.convertToTreeRDD(input, splits)
@@ -34,7 +34,7 @@ trait SparkXGBoostAlgorithm {
         val nodeBatch = dequeueWithinMemLimit(nodeQueue)
         val featureIndicesBundle = sampleFeatureIndices(metaData.numFeatures, $(featureSampleRatio), nodeBatch.length, rng)
 
-        val sampledTreePoints = treePoints.sample(false, $(sampleRatio), rng.nextLong)
+        val sampledTreePoints = treePoints.sample(withReplacement = false, $(sampleRatio), rng.nextLong())
         // TODO: Broadcast?
         val lossAggregator = sampledTreePoints.treeAggregate(
           new LossAggregator(featureIndicesBundle, workingModel, currentRoot, metaData, loss))(
@@ -49,6 +49,7 @@ trait SparkXGBoostAlgorithm {
             lossAggregator.featureIndicesBundle(nodeIdx), lossAggregator.offsets(nodeIdx), $(lambda), $(alpha))
 
           node.split = Some(bestSplitInfo.split)
+          node.gain = Some(bestSplitInfo.gain)
 
           val leftChild = new WorkingNode(node.depth + 1)
           leftChild.prediction = Some(bestSplitInfo.leftPrediction * $(eta))
@@ -67,11 +68,20 @@ trait SparkXGBoostAlgorithm {
         nodeQueue ++= nodesToEnqueue
       }
 
+      prune(currentRoot, $(gamma))
+
       if (!currentRoot.isLeaf) {
         workingModel.trees = workingModel.trees :+ currentRoot
         treeIdx += 1
       } else {
-        treeIdx = $(numTrees) // breaking the loop
+        /*
+          If there is no sampling in records or features,
+          then the next iteration will still be an empty tree.
+          So skip to the end of the while loop.
+         */
+        if ($(sampleRatio) == 1.0 && $(featureSampleRatio) == 1.0) {
+          treeIdx = $(numTrees)
+        }
       }
     }
 
@@ -203,7 +213,18 @@ trait SparkXGBoostAlgorithm {
     g * est + 0.5 * (h + lambda) * Math.pow(est, 2.0) + alpha * Math.abs(est)
   }
 
+  private[sxgboost] def prune(workingNode: WorkingNode, gamma: Double): Unit = {
+    if (! workingNode.isLeaf) {
+      prune(workingNode.leftChild.get, gamma)
+      prune(workingNode.rightChild.get, gamma)
 
+      if (workingNode.leftChild.get.isLeaf &&
+        workingNode.rightChild.get.isLeaf &&
+        workingNode.gain.get <= gamma) {
+        workingNode.collapse()
+      }
+    }
+  }
 }
 
 

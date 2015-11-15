@@ -53,6 +53,6 @@ class SeedSuite extends FunSuite with MLlibTestSparkContext with TestData {
     val rmse3 = evaluator.evaluate(sXGBoostModel3.transform(featureIndexer.transform(data)))
 
     assert(rmse1 === rmse2)
-    assert(rmse1 !~= rmse3 relTol 1e-2)
+    assert(rmse1 !~= rmse3 relTol 1e-3)
   }
 }

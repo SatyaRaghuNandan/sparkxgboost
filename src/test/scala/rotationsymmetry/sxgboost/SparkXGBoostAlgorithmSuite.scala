@@ -103,7 +103,6 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
 
   }
 
-
   test("L1 loss") {
     /* R code for plotting sparse estimate
 
@@ -127,5 +126,50 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     // otherwise, non-sparse estimate.
     assert(sparkXGBoost.getPartialObjAndEst(g = 3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
     assert(sparkXGBoost.getPartialObjAndEst(g = -3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
+  }
+
+  def createMockTreeForPruning: WorkingNode = {
+    val root = new WorkingNode(0)
+    root.split = Some(new WorkingSplit(1, 1))
+    root.leftChild = Some(new WorkingNode(1))
+    root.rightChild = Some(new WorkingNode(1))
+
+    val leftChild = root.leftChild.get
+    leftChild.split = Some(new WorkingSplit(1, 1))
+    leftChild.leftChild = Some(new WorkingNode(2))
+    leftChild.rightChild = Some(new WorkingNode(2))
+
+    root
+  }
+
+  test("post-pruning: large gamma => pruning"){
+    val root = createMockTreeForPruning
+    root.gain = Some(3.0)
+    root.leftChild.get.gain = Some(1.0)
+    sparkXGBoost.prune(root, 2.0)
+    assert(root.leftChild.get.isLeaf)
+  }
+
+  test("post-pruning: small gamma => no pruning"){
+    val root = createMockTreeForPruning
+    root.gain = Some(3.0)
+    root.leftChild.get.gain = Some(1.0)
+    sparkXGBoost.prune(root, 0.5)
+    assert(! root.leftChild.get.isLeaf)
+  }
+
+  test("post-pruning: large gamma but children are non leaves => no pruning"){
+    val root = createMockTreeForPruning
+    val leftLeftChild = root.leftChild.get.leftChild.get
+    leftLeftChild.split = Some(new WorkingSplit(1, 1))
+    leftLeftChild.leftChild = Some(new WorkingNode(3))
+    leftLeftChild.rightChild = Some(new WorkingNode(3))
+
+    root.gain = Some(3.0)
+    root.leftChild.get.gain = Some(1.0)
+    root.leftChild.get.leftChild.get.gain = Some(1.2)
+
+    sparkXGBoost.prune(root, 1.1)
+    assert(! root.leftChild.get.isLeaf)
   }
 }

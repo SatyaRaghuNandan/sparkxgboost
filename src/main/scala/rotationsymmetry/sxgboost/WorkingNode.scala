@@ -7,6 +7,7 @@ private[sxgboost] class WorkingNode(val depth: Int) extends Serializable {
   var prediction: Option[Double] = None
   var idxInBatch: Option[Int] = None
   var weight: Option[Double] = None
+  var gain: Option[Double] = None
 
   def isLeaf: Boolean = split.isEmpty
 
@@ -44,5 +45,11 @@ private[sxgboost] class WorkingNode(val depth: Int) extends Serializable {
       val splitForNode = splitsBundle(split.get.featureIndex)(split.get.threshold)
       new InnerNode(splitForNode, leftNode, rightNode)
     }
+  }
+
+  def collapse(): Unit = {
+    leftChild = None
+    rightChild = None
+    split = None
   }
 }
