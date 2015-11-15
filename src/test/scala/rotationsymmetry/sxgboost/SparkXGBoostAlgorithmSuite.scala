@@ -1,5 +1,6 @@
 package rotationsymmetry.sxgboost
 
+import org.apache.spark.Logging
 import org.apache.spark.ml.param.ParamMap
 import org.scalatest.{BeforeAndAfter, FunSuite}
 import rotationsymmetry.sxgboost.utils.TestingUtils._
@@ -10,7 +11,7 @@ import scala.util.Random
 class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
 
   class MockSparkXGBoost(override val uid: String)
-    extends SparkXGBoostParams with SparkXGBoostAlgorithm {
+    extends SparkXGBoostParams with Logging with SparkXGBoostAlgorithm {
 
     override def copy(extra: ParamMap): this.type = defaultCopy(extra)
   }
