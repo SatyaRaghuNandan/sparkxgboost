@@ -72,7 +72,7 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     assert(optimSplit.rightWeight ~== 2.0 relTol 1e-5)
   }
 
-  test("findBestSplit with small gamma"){
+  test("findBestSplit"){
     /*
     See Scenario 1 and 2 of
     https://docs.google.com/spreadsheets/d/1rPOorXThwn3XLnCRFImExSmlTSr4evBDAdY4oXMtf3A/edit?usp=sharing
@@ -96,43 +96,13 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     val featureIndices = Array[Int](0, 1)
     val lambda = 0.5
     val alpha = 0.0
-    val gamma = -10.0
 
-    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha, gamma)
-    assert(optimSplit.get.split.featureIndex == 1)
-    assert(optimSplit.get.split.threshold == 0)
+    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha)
+    assert(optimSplit.split.featureIndex == 1)
+    assert(optimSplit.split.threshold == 0)
 
   }
 
-  test("findBestSplit with big gamma"){
-    /*
-    See Scenario 1 and 2 of
-    https://docs.google.com/spreadsheets/d/1rPOorXThwn3XLnCRFImExSmlTSr4evBDAdY4oXMtf3A/edit?usp=sharing
-    for the worksheet to derive the results.
-    */
-    val stats: Array[Double] = Array(
-      1.0, 2.0, 1.0,
-      1.5, 0.2, 1.0,
-      0.1, 0.0, 1.0,
-      3.0, 10,  1.0,
-      1.5, 9.0, 1.0,
-
-      1.5, 20.0,1.0,
-      3.5, 0.2, 1.0,
-      1.3, 2.0, 1.0,
-      0.1, 0.0, 1.0,
-      3.0, 10.0,1.0,
-      1.5, 9.0, 1.0
-    )
-    val offsets = Array[Int](0, 15)
-    val featureIndices = Array[Int](0, 1)
-    val lambda = 0.5
-    val alpha = 0.0
-    val gamma = 10.0
-
-    val optimSplit = sparkXGBoost.findBestSplit(stats, featureIndices, offsets, lambda, alpha, gamma)
-    assert(optimSplit.isEmpty)
-  }
 
   test("L1 loss") {
     /* R code for plotting sparse estimate
@@ -158,6 +128,4 @@ class SparkXGBoostAlgorithmSuite extends FunSuite with BeforeAndAfter{
     assert(sparkXGBoost.getPartialObjAndEst(g = 3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
     assert(sparkXGBoost.getPartialObjAndEst(g = -3.1, h = 2.0, lambda = 0.1, alpha = 3.0)._2 !== 0.0)
   }
-
-
 }
